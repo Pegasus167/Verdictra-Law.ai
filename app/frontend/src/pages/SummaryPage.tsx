@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle, Clock, Minus, AlertTriangle, Loader2 } from 'lucide-react'
+import { CheckCircle, Clock, Minus, AlertTriangle, Loader2, X } from 'lucide-react'
 import { api } from '../lib/api'
 import type { ResolutionState, Group, Candidate } from '../types'
 
 export default function SummaryPage() {
   const { caseId } = useParams<{ caseId: string }>()
-  const navigate = useNavigate()
+  const navigate   = useNavigate()
 
-  const [state, setState] = useState<ResolutionState | null>(null)
+  const [state, setState]       = useState<ResolutionState | null>(null)
   const [caseName, setCaseName] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [pdfFile, setPdfFile]   = useState('')
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState('')
+
+  // PDF viewer state
+  const [pdfOpen, setPdfOpen]   = useState(false)
+  const [pdfPage, setPdfPage]   = useState(1)
+  const [activeKey, setActiveKey] = useState<string | null>(null)
 
   useEffect(() => {
     if (!caseId) return
@@ -22,15 +28,26 @@ export default function SummaryPage() {
       .then(([s, c]) => {
         setState(s)
         setCaseName(c.case_name)
+        setPdfFile(c.pdf_filename)
       })
       .catch(() => setError('Failed to load resolution summary'))
       .finally(() => setLoading(false))
   }, [caseId])
 
+  function openPdf(page: number, key: string) {
+    setPdfPage(page)
+    setActiveKey(key)
+    setPdfOpen(true)
+  }
+
+  function closePdf() {
+    setPdfOpen(false)
+    setActiveKey(null)
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'var(--bg)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
         <Loader2 size={32} className="animate-spin text-indigo-400" />
       </div>
     )
@@ -38,8 +55,7 @@ export default function SummaryPage() {
 
   if (error || !state) {
     return (
-      <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'var(--bg)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
         <div className="text-sm text-red-400">{error || 'Resolution state not found'}</div>
       </div>
     )
@@ -52,203 +68,318 @@ export default function SummaryPage() {
   })
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
 
       {/* Header */}
-      <header className="h-14 flex items-center justify-between px-10"
+      <header className="h-14 flex items-center justify-between px-10 flex-shrink-0"
         style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
         <div>
           <span className="font-bold text-indigo-300 tracking-wider text-sm">LAW.ai</span>
-          <span className="text-sm ml-2" style={{ color: 'var(--muted)' }}>/ {caseName} / Resolution Summary</span>
+          <span className="text-sm ml-2" style={{ color: 'var(--muted)' }}>
+            / {caseName} / Resolution Summary
+          </span>
         </div>
-        <span className="text-xs" style={{ color: 'var(--muted)' }}>
-          Processed {createdAt}
-        </span>
+        <span className="text-xs" style={{ color: 'var(--muted)' }}>Processed {createdAt}</span>
       </header>
 
-      <main className="max-w-4xl mx-auto px-10 py-10">
+      {/* Body — splits into main + pdf panel */}
+      <div className="flex flex-1 overflow-hidden">
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-5 mb-10">
-          <div className="rounded-xl p-7 text-center"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <div className="text-4xl font-bold mb-2 text-emerald-400">
-              {summary.auto_merge_count}
-            </div>
-            <div className="text-xs flex items-center justify-center gap-1"
-              style={{ color: 'var(--muted)' }}>
-              <CheckCircle size={12} /> Auto-merged
-            </div>
-          </div>
-          <div className="rounded-xl p-7 text-center"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <div className="text-4xl font-bold mb-2 text-yellow-400">
-              {summary.needs_review_count}
-            </div>
-            <div className="text-xs flex items-center justify-center gap-1"
-              style={{ color: 'var(--muted)' }}>
-              <Clock size={12} /> Need your review
-            </div>
-          </div>
-          <div className="rounded-xl p-7 text-center"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <div className="text-4xl font-bold mb-2 text-slate-400">
-              {summary.auto_keep_count}
-            </div>
-            <div className="text-xs flex items-center justify-center gap-1"
-              style={{ color: 'var(--muted)' }}>
-              <Minus size={12} /> Kept separate
-            </div>
-          </div>
-        </div>
+        {/* Main content */}
+        <div className="flex-1 overflow-y-auto px-10 py-10">
 
-        {/* Action */}
-        <div className="flex gap-3 mb-10">
-          {summary.needs_review_count > 0 ? (
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-5 mb-10">
+            <div className="rounded-xl p-7 text-center"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div className="text-4xl font-bold mb-2 text-emerald-400">{summary.auto_merge_count}</div>
+              <div className="text-xs flex items-center justify-center gap-1" style={{ color: 'var(--muted)' }}>
+                <CheckCircle size={12} /> Auto-merged
+              </div>
+            </div>
+            <div className="rounded-xl p-7 text-center"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div className="text-4xl font-bold mb-2 text-yellow-400">{summary.needs_review_count}</div>
+              <div className="text-xs flex items-center justify-center gap-1" style={{ color: 'var(--muted)' }}>
+                <Clock size={12} /> Need your review
+              </div>
+            </div>
+            <div className="rounded-xl p-7 text-center"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div className="text-4xl font-bold mb-2 text-slate-400">{summary.auto_keep_count}</div>
+              <div className="text-xs flex items-center justify-center gap-1" style={{ color: 'var(--muted)' }}>
+                <Minus size={12} /> Kept separate
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-3 mb-10">
+            {summary.needs_review_count > 0 ? (
+              <button
+                onClick={() => navigate(`/review/${caseId}`)}
+                className="px-8 py-3 rounded-lg font-bold text-sm"
+                style={{ background: 'var(--accent)', color: 'white' }}>
+                ▶ Start Review ({summary.needs_review_count} groups) →
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate(`/query/${caseId}`)}
+                className="px-8 py-3 rounded-lg font-bold text-sm"
+                style={{ background: '#10b981', color: 'white' }}>
+                ✓ All resolved — Start Querying →
+              </button>
+            )}
             <button
-              onClick={() => navigate(`/review/${caseId}`)}
-              className="px-8 py-3 rounded-lg font-bold text-sm transition-colors"
-              style={{ background: 'var(--accent)', color: 'white' }}>
-              ▶ Start Review ({summary.needs_review_count} groups) →
+              onClick={() => navigate('/')}
+              className="px-6 py-3 rounded-lg text-sm"
+              style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)' }}>
+              ← Cases
             </button>
-          ) : (
-            <button
-              onClick={() => navigate(`/query/${caseId}`)}
-              className="px-8 py-3 rounded-lg font-bold text-sm transition-colors"
-              style={{ background: '#10b981', color: 'white' }}>
-              ✓ All resolved — Start Querying →
-            </button>
-          )}
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-3 rounded-lg text-sm transition-colors"
-            style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)' }}>
-            ← Cases
-          </button>
-        </div>
-
-        {/* Auto-merged groups */}
-        <div className="rounded-xl overflow-hidden mb-6"
-          style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div className="flex items-center justify-between px-6 py-4"
-            style={{ borderBottom: '1px solid var(--border)' }}>
-            <h2 className="text-sm font-semibold">✅ Auto-merged groups</h2>
-            <span className="text-xs px-3 py-1 rounded-full"
-              style={{ background: '#05261a', border: '1px solid #065f46', color: '#10b981' }}>
-              {auto_merge.length} groups
-            </span>
           </div>
-          {auto_merge.length === 0 ? (
-            <div className="px-6 py-8 text-center text-xs" style={{ color: 'var(--muted)' }}>
-              No auto-merges
-            </div>
-          ) : (
-            <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-              {auto_merge.map(group => (
-                <div key={group.group_id} className="px-6 py-3 flex items-center gap-3 flex-wrap">
-                  <span className="text-xs px-2 py-0.5 rounded"
-                    style={{ background: '#1e1b4b', color: '#818cf8', border: '1px solid #3730a3' }}>
-                    {group.schema_type}
-                  </span>
-                  <div className="flex flex-wrap gap-1 flex-1">
-                    {group.candidates.map(c => (
-                      <span key={c.canonical_name}
-                        className="text-xs px-2 py-0.5 rounded"
-                        style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--muted2)' }}>
-                        {c.text}
-                        <span className="ml-1" style={{ color: 'var(--muted)' }}>p.{c.source_page}</span>
-                      </span>
-                    ))}
-                  </div>
-                  <span style={{ color: 'var(--muted)' }}>→</span>
-                  <span className="text-xs font-bold text-indigo-300">{group.canonical_name}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Needs review preview */}
-        {needs_review.length > 0 && (
+          {/* ── Auto-merged groups ── */}
           <div className="rounded-xl overflow-hidden mb-6"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <div className="flex items-center justify-between px-6 py-4"
               style={{ borderBottom: '1px solid var(--border)' }}>
-              <h2 className="text-sm font-semibold flex items-center gap-2">
-                <AlertTriangle size={14} className="text-yellow-400" />
-                Groups needing your review
-              </h2>
+              <div>
+                <h2 className="text-sm font-semibold">✅ Auto-merged groups</h2>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
+                  Click any page number to verify the extraction in the PDF
+                </p>
+              </div>
               <span className="text-xs px-3 py-1 rounded-full"
-                style={{ background: '#1c1003', border: '1px solid #78350f', color: '#f59e0b' }}>
-                {needs_review.length} groups
+                style={{ background: '#05261a', border: '1px solid #065f46', color: '#10b981' }}>
+                {auto_merge.length} groups
               </span>
             </div>
-            <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-              {needs_review.slice(0, 10).map(group => (
-                <div key={group.group_id} className="px-6 py-3 flex items-center gap-3 flex-wrap">
-                  <span className="text-xs px-2 py-0.5 rounded"
-                    style={{ background: '#1e1b4b', color: '#818cf8', border: '1px solid #3730a3' }}>
-                    {group.schema_type}
-                  </span>
-                  <div className="flex flex-wrap gap-1 flex-1">
-                    {group.candidates.slice(0, 4).map(c => (
-                      <span key={c.canonical_name}
-                        className="text-xs px-2 py-0.5 rounded"
-                        style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--muted2)' }}>
-                        {c.text}
+
+            {auto_merge.length === 0 ? (
+              <div className="px-6 py-8 text-center text-xs" style={{ color: 'var(--muted)' }}>
+                No auto-merges
+              </div>
+            ) : (
+              <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+                {auto_merge.map(group => (
+                  <div key={group.group_id} className="px-6 py-4">
+                    {/* Group header */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-xs px-2 py-0.5 rounded"
+                        style={{ background: '#1e1b4b', color: '#818cf8', border: '1px solid #3730a3' }}>
+                        {group.schema_type}
                       </span>
-                    ))}
-                    {group.candidates.length > 4 && (
+                      <span className="text-xs font-bold text-indigo-300">
+                        → {group.canonical_name}
+                      </span>
                       <span className="text-xs" style={{ color: 'var(--muted)' }}>
-                        +{group.candidates.length - 4} more
+                        {group.candidates.length} variant{group.candidates.length !== 1 ? 's' : ''} merged
                       </span>
-                    )}
+                    </div>
+
+                    {/* Each candidate with its own page citation buttons */}
+                    <div className="flex flex-col gap-2 pl-2">
+                      {group.candidates.map((c: Candidate) => {
+                        // Collect all pages this candidate appeared on
+                        // source_page is the primary page, source_pages has all if available
+                        const pages: number[] = (c as any).source_pages
+                          ? (c as any).source_pages
+                          : c.source_page ? [c.source_page] : []
+
+                        return (
+                          <div key={c.canonical_name}
+                            className="flex items-center gap-2 flex-wrap">
+                            {/* Candidate text */}
+                            <span className="text-xs px-2 py-1 rounded"
+                              style={{
+                                background: 'var(--bg)',
+                                border: '1px solid var(--border2)',
+                                color: 'var(--text)',
+                                minWidth: 120,
+                              }}>
+                              {c.text}
+                            </span>
+
+                            {/* Confidence */}
+                            <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                              {Math.round((c.confidence || 0) * 100)}%
+                            </span>
+
+                            {/* Page citation buttons */}
+                            {pages.length > 0 && (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                                  found on:
+                                </span>
+                                {pages.map(page => {
+                                  const key = `${group.group_id}-${c.canonical_name}-${page}`
+                                  return (
+                                    <button
+                                      key={key}
+                                      onClick={() => openPdf(page, key)}
+                                      className="text-xs px-2 py-0.5 rounded transition-colors"
+                                      style={{
+                                        background: activeKey === key ? '#1a1f35' : 'var(--surface2)',
+                                        border: `1px solid ${activeKey === key ? 'var(--accent)' : 'var(--border2)'}`,
+                                        color: activeKey === key ? 'var(--accent2)' : 'var(--muted2)',
+                                      }}>
+                                      📄 p.{page}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-              {needs_review.length > 10 && (
-                <div className="px-6 py-3 text-xs" style={{ color: 'var(--muted)' }}>
-                  ... and {needs_review.length - 10} more groups
-                </div>
-              )}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Needs review preview ── */}
+          {needs_review.length > 0 && (
+            <div className="rounded-xl overflow-hidden mb-6"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div className="flex items-center justify-between px-6 py-4"
+                style={{ borderBottom: '1px solid var(--border)' }}>
+                <h2 className="text-sm font-semibold flex items-center gap-2">
+                  <AlertTriangle size={14} className="text-yellow-400" />
+                  Groups needing your review
+                </h2>
+                <span className="text-xs px-3 py-1 rounded-full"
+                  style={{ background: '#1c1003', border: '1px solid #78350f', color: '#f59e0b' }}>
+                  {needs_review.length} groups
+                </span>
+              </div>
+              <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+                {needs_review.slice(0, 10).map(group => (
+                  <div key={group.group_id} className="px-6 py-3 flex items-center gap-3 flex-wrap">
+                    <span className="text-xs px-2 py-0.5 rounded"
+                      style={{ background: '#1e1b4b', color: '#818cf8', border: '1px solid #3730a3' }}>
+                      {group.schema_type}
+                    </span>
+                    <div className="flex flex-wrap gap-1 flex-1">
+                      {group.candidates.slice(0, 4).map((c: Candidate) => (
+                        <div key={c.canonical_name} className="flex items-center gap-1">
+                          <span className="text-xs px-2 py-0.5 rounded"
+                            style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--muted2)' }}>
+                            {c.text}
+                          </span>
+                          {c.source_page && (
+                            <button
+                              onClick={() => openPdf(c.source_page!, `needs-${group.group_id}-${c.canonical_name}`)}
+                              className="text-xs px-1.5 py-0.5 rounded transition-colors"
+                              style={{
+                                background: activeKey === `needs-${group.group_id}-${c.canonical_name}` ? '#1a1f35' : 'var(--surface2)',
+                                border: `1px solid ${activeKey === `needs-${group.group_id}-${c.canonical_name}` ? 'var(--accent)' : 'var(--border2)'}`,
+                                color: activeKey === `needs-${group.group_id}-${c.canonical_name}` ? 'var(--accent2)' : 'var(--muted)',
+                              }}>
+                              p.{c.source_page}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {group.candidates.length > 4 && (
+                        <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                          +{group.candidates.length - 4} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {needs_review.length > 10 && (
+                  <div className="px-6 py-3 text-xs" style={{ color: 'var(--muted)' }}>
+                    ... and {needs_review.length - 10} more groups
+                  </div>
+                )}
+              </div>
             </div>
+          )}
+
+          {/* ── Auto-kept separate ── */}
+          {auto_keep.length > 0 && (
+            <div className="rounded-xl overflow-hidden"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div className="flex items-center justify-between px-6 py-4"
+                style={{ borderBottom: '1px solid var(--border)' }}>
+                <h2 className="text-sm font-semibold">— Kept separate (distinct entities)</h2>
+                <span className="text-xs px-3 py-1 rounded-full"
+                  style={{ background: 'var(--surface2)', border: '1px solid var(--border2)', color: 'var(--muted)' }}>
+                  {auto_keep.length} groups
+                </span>
+              </div>
+              <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+                {auto_keep.map((group: Group) => (
+                  <div key={group.group_id} className="px-6 py-3 flex items-center gap-3 flex-wrap">
+                    <span className="text-xs px-2 py-0.5 rounded"
+                      style={{ background: '#1e1b4b', color: '#818cf8', border: '1px solid #3730a3' }}>
+                      {group.schema_type}
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {group.candidates.map((c: Candidate) => (
+                        <div key={c.canonical_name} className="flex items-center gap-1">
+                          <span className="text-xs px-2 py-0.5 rounded"
+                            style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--muted2)' }}>
+                            {c.text}
+                          </span>
+                          {c.source_page && (
+                            <button
+                              onClick={() => openPdf(c.source_page!, `keep-${group.group_id}-${c.canonical_name}`)}
+                              className="text-xs px-1.5 py-0.5 rounded transition-colors"
+                              style={{
+                                background: activeKey === `keep-${group.group_id}-${c.canonical_name}` ? '#1a1f35' : 'var(--surface2)',
+                                border: `1px solid ${activeKey === `keep-${group.group_id}-${c.canonical_name}` ? 'var(--accent)' : 'var(--border2)'}`,
+                                color: activeKey === `keep-${group.group_id}-${c.canonical_name}` ? 'var(--accent2)' : 'var(--muted)',
+                              }}>
+                              p.{c.source_page}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* ── PDF panel ── */}
+        {pdfOpen && (
+          <div className="w-96 flex-shrink-0 flex flex-col overflow-hidden"
+            style={{ background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
+              style={{ borderBottom: '1px solid var(--border)' }}>
+              <span className="text-xs uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
+                PDF Viewer
+              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs" style={{ color: 'var(--accent2)' }}>
+                  {pdfFile} · p.{pdfPage}
+                </span>
+                <button
+                  onClick={closePdf}
+                  className="w-6 h-6 flex items-center justify-center rounded"
+                  style={{ color: 'var(--muted)', border: '1px solid var(--border)' }}>
+                  <X size={12} />
+                </button>
+              </div>
+            </div>
+            <iframe
+              key={`${pdfFile}-${pdfPage}`}
+              src={`/pdf/${caseId}/${pdfFile}#page=${pdfPage}`}
+              className="flex-1 w-full"
+              style={{ border: 'none', background: '#111' }}
+              title="PDF Viewer"
+            />
           </div>
         )}
 
-        {/* Auto-kept separate */}
-        {auto_keep.length > 0 && (
-          <div className="rounded-xl overflow-hidden"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <div className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: '1px solid var(--border)' }}>
-              <h2 className="text-sm font-semibold">— Kept separate (distinct entities)</h2>
-              <span className="text-xs px-3 py-1 rounded-full"
-                style={{ background: 'var(--surface2)', border: '1px solid var(--border2)', color: 'var(--muted)' }}>
-                {auto_keep.length} groups
-              </span>
-            </div>
-            <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-              {auto_keep.map((group: Group) => (
-                <div key={group.group_id} className="px-6 py-3 flex items-center gap-3 flex-wrap">
-                  <span className="text-xs px-2 py-0.5 rounded"
-                    style={{ background: '#1e1b4b', color: '#818cf8', border: '1px solid #3730a3' }}>
-                    {group.schema_type}
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {group.candidates.map((c: Candidate) => (
-                      <span key={c.canonical_name}
-                        className="text-xs px-2 py-0.5 rounded"
-                        style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--muted2)' }}>
-                        {c.text}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </main>
+      </div>
     </div>
   )
 }
