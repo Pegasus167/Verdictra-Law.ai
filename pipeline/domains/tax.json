@@ -1,0 +1,99 @@
+{
+  "name": "Tax Law",
+  "description": "Income tax, GST, customs, excise, tax assessment disputes",
+
+  "gliner_labels": [
+    "Assessment Order",
+    "Reassessment Order",
+    "Demand Notice",
+    "Tax Demand",
+    "Penalty Order",
+    "Appellate Order",
+    "ITAT Order",
+    "High Court Order",
+    "Assessee",
+    "Assessing Officer",
+    "AO",
+    "Commissioner",
+    "CIT",
+    "PCIT",
+    "ITAT",
+    "Income Tax Appellate Tribunal",
+    "CESTAT",
+    "GST Authority",
+    "Tax Inspector",
+    "Income Tax",
+    "Corporate Tax",
+    "Capital Gains",
+    "Business Income",
+    "Deduction",
+    "Exemption",
+    "TDS",
+    "Advance Tax",
+    "Return of Income",
+    "ITR",
+    "Assessment Year",
+    "Previous Year",
+    "Tax Evasion",
+    "Search and Seizure",
+    "Survey",
+    "Penalty",
+    "Interest",
+    "Refund",
+    "GST",
+    "IGST",
+    "CGST",
+    "SGST",
+    "Input Tax Credit",
+    "ITC",
+    "Customs Duty",
+    "Excise Duty",
+    "Service Tax"
+  ],
+
+  "relationship_vocab": [
+    "ASSESSED_BY",
+    "DEMANDED_FROM",
+    "PAID_BY",
+    "REFUNDED_TO",
+    "APPEALED_BEFORE",
+    "PENALISED_BY",
+    "DEDUCTED_BY",
+    "EXEMPTED_FROM",
+    "SEARCHED_BY",
+    "FILED_RETURN_WITH",
+    "CHALLENGED_BEFORE",
+    "STAYED_BY"
+  ],
+
+  "heading_patterns": [
+    "ASSESSMENT ORDER",
+    "REASSESSMENT",
+    "DEMAND NOTICE",
+    "PENALTY ORDER",
+    "APPEAL",
+    "ITAT ORDER",
+    "SEARCH AND SEIZURE",
+    "SURVEY",
+    "TAX EVASION",
+    "REFUND",
+    "TDS",
+    "GST DEMAND",
+    "INPUT TAX CREDIT"
+  ],
+
+  "prompt_examples": [
+    {
+      "context": "The Assessing Officer raised a demand of Rs. 2.5 crore against the assessee",
+      "entity_a": "Assessing Officer",
+      "entity_b": "assessee",
+      "relationship": "DEMANDED_FROM"
+    },
+    {
+      "context": "The assessee appealed before ITAT against the Commissioner's order",
+      "entity_a": "assessee",
+      "entity_b": "ITAT",
+      "relationship": "APPEALED_BEFORE"
+    }
+  ]
+}

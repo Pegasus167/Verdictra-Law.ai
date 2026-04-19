@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LAW.ai — Complete</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'JetBrains Mono','Fira Code',monospace; background: #080b12; color: #e2e8f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #0e1420; border: 1px solid #1c2535; border-radius: 16px; padding: 48px; text-align: center; max-width: 520px; width: 100%; }
+  .icon { font-size: 3rem; margin-bottom: 20px; }
+  h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+  .case-name { font-size: 0.78rem; color: #6366f1; margin-bottom: 24px; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 32px; }
+  .stat { background: #080b12; border: 1px solid #1c2535; border-radius: 10px; padding: 16px; }
+  .stat .num { font-size: 1.8rem; font-weight: 700; color: #818cf8; }
+  .stat .label { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 8px; font-size: 0.88rem; font-weight: 700; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; width: 100%; justify-content: center; margin-bottom: 10px; font-family: inherit; }
+  .btn-primary { background: #6366f1; color: white; }
+  .btn-primary:hover { background: #4f46e5; }
+  .btn-secondary { background: #131926; color: #94a3b8; border: 1px solid #243044; }
+  .btn-secondary:hover { background: #1c2535; }
+  .warning { background: #1c100322; border: 1px solid #78350f; border-radius: 8px; padding: 12px; font-size: 0.78rem; color: #f59e0b; margin-bottom: 24px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">✓</div>
+  <h1>Review Complete</h1>
+  <div class="case-name">{{ case_name }}</div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="num">{{ auto_merge }}</div>
+      <div class="label">Auto-merged</div>
+    </div>
+    <div class="stat">
+      <div class="num">{{ reviewed }}</div>
+      <div class="label">Human reviewed</div>
+    </div>
+    <div class="stat">
+      <div class="num">{{ skipped }}</div>
+      <div class="label">Skipped</div>
+    </div>
+    <div class="stat">
+      <div class="num">{{ disagreements }}</div>
+      <div class="label">LLM disagreements</div>
+    </div>
+  </div>
+
+  {% if disagreements > 0 %}
+  <div class="warning">
+    ⚠️ {{ disagreements }} decision(s) differed from LLM recommendations and have been logged.
+  </div>
+  {% endif %}
+
+  <a href="/query/{{ case_id }}" class="btn btn-primary">
+    ⚡ Start Asking Questions →
+  </a>
+  <a href="/" class="btn btn-secondary">← Back to Cases</a>
+</div>
+</body>
+</html>

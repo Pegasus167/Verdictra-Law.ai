@@ -1,0 +1,107 @@
+{
+  "name": "Constitutional & Writ",
+  "description": "Writ petitions, fundamental rights, Article 226/32, PIL, statutory interpretation",
+
+  "gliner_labels": [
+    "Writ Petition",
+    "Public Interest Litigation",
+    "PIL",
+    "Fundamental Right",
+    "Article 14",
+    "Article 19",
+    "Article 21",
+    "Article 226",
+    "Article 32",
+    "Article 300A",
+    "Writ of Mandamus",
+    "Writ of Certiorari",
+    "Writ of Prohibition",
+    "Writ of Habeas Corpus",
+    "Writ of Quo Warranto",
+    "Constitutional Provision",
+    "Ultra Vires",
+    "Arbitrary Action",
+    "Legitimate Expectation",
+    "Natural Justice",
+    "Audi Alteram Partem",
+    "Nemo Judex",
+    "Locus Standi",
+    "Maintainability",
+    "Doctrine of Proportionality",
+    "Constitutional Validity",
+    "Delegated Legislation",
+    "Statutory Interpretation",
+    "High Court",
+    "Supreme Court",
+    "Division Bench",
+    "Full Bench",
+    "Constitution Bench",
+    "SLP",
+    "Special Leave Petition",
+    "Civil Appeal",
+    "State",
+    "Union of India",
+    "Statutory Authority",
+    "Public Authority",
+    "Government",
+    "Notification",
+    "Circular",
+    "Government Order"
+  ],
+
+  "relationship_vocab": [
+    "PETITIONS_AGAINST",
+    "CHALLENGED_BY",
+    "DECLARED_UNCONSTITUTIONAL",
+    "UPHELD_BY",
+    "QUASHED_BY",
+    "STAYED_BY",
+    "DIRECTED_TO",
+    "GOVERNED_BY",
+    "VIOLATES",
+    "CONFERS_RIGHT_ON",
+    "ISSUED_BY",
+    "STRUCK_DOWN_BY",
+    "INTERPRETED_BY",
+    "REFERRED_TO_LARGER_BENCH"
+  ],
+
+  "heading_patterns": [
+    "WRIT PETITION",
+    "GROUNDS OF CHALLENGE",
+    "CONSTITUTIONAL VALIDITY",
+    "FUNDAMENTAL RIGHTS",
+    "ARTICLE 226",
+    "ARTICLE 32",
+    "ULTRA VIRES",
+    "ARBITRARY",
+    "NATURAL JUSTICE",
+    "LEGITIMATE EXPECTATION",
+    "LOCUS STANDI",
+    "MAINTAINABILITY",
+    "INTERIM RELIEF",
+    "STAY ORDER",
+    "PIL"
+  ],
+
+  "prompt_examples": [
+    {
+      "context": "The petitioner challenged the notification as ultra vires the parent Act",
+      "entity_a": "petitioner",
+      "entity_b": "notification",
+      "relationship": "CHALLENGED_BY"
+    },
+    {
+      "context": "The High Court quashed the demand notice as arbitrary and violative of Article 14",
+      "entity_a": "demand notice",
+      "entity_b": "High Court",
+      "relationship": "QUASHED_BY"
+    },
+    {
+      "context": "The Supreme Court directed MIDC to refund the amount deposited",
+      "entity_a": "Supreme Court",
+      "entity_b": "MIDC",
+      "relationship": "DIRECTED_TO"
+    }
+  ]
+}

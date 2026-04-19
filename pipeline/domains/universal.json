@@ -1,0 +1,97 @@
+{
+  "name": "Universal",
+  "description": "Entities and relationships present in every legal case regardless of domain",
+
+  "gliner_labels": [
+    "Person",
+    "Organization",
+    "Government Body",
+    "Court",
+    "Statutory Authority",
+    "Financial Institution",
+    "Asset",
+    "Property",
+    "Agreement",
+    "Contract",
+    "Demand Notice",
+    "Legal Proceeding",
+    "Writ Petition",
+    "Appeal",
+    "Court Order",
+    "Transaction",
+    "Payment",
+    "Regulation",
+    "Act",
+    "Legal Section",
+    "Government Resolution",
+    "Policy",
+    "Date",
+    "Amount",
+    "Case Number",
+    "Document Reference",
+    "Location",
+    "Address"
+  ],
+
+  "relationship_vocab": [
+    "PETITIONS_AGAINST",
+    "FILED_BY",
+    "CHALLENGED_BY",
+    "ORDERED_BY",
+    "GOVERNED_BY",
+    "REPRESENTED_BY",
+    "APPOINTED_BY",
+    "PARTY_TO",
+    "DECIDED_BY",
+    "APPEALED_BY",
+    "UPHELD_BY",
+    "SET_ASIDE_BY",
+    "DIRECTED_TO",
+    "LOCATED_AT",
+    "REFERENCED_IN",
+    "RELATED_TO"
+  ],
+
+  "heading_patterns": [
+    "FACTS",
+    "GROUNDS",
+    "PRAYERS",
+    "RELIEF",
+    "BACKGROUND",
+    "INTRODUCTION",
+    "PARTIES",
+    "JURISDICTION",
+    "CAUSE OF ACTION",
+    "STATEMENT OF FACTS",
+    "GROUNDS OF CHALLENGE",
+    "RELIEFS SOUGHT",
+    "INTERIM RELIEF",
+    "SUBMISSIONS",
+    "ARGUMENTS",
+    "CONCLUSION",
+    "ORDER",
+    "JUDGMENT",
+    "DECREE"
+  ],
+
+  "prompt_examples": [
+    {
+      "context": "CELIR LLP filed a writ petition against MIDC in the Bombay High Court",
+      "entity_a": "CELIR LLP",
+      "entity_b": "MIDC",
+      "relationship": "PETITIONS_AGAINST"
+    },
+    {
+      "context": "The Supreme Court set aside the order of the Bombay High Court",
+      "entity_a": "Supreme Court",
+      "entity_b": "Bombay High Court order",
+      "relationship": "SET_ASIDE_BY"
+    },
+    {
+      "context": "The petitioner was represented by Senior Advocate Mr. Mehta",
+      "entity_a": "petitioner",
+      "entity_b": "Mr. Mehta",
+      "relationship": "REPRESENTED_BY"
+    }
+  ]
+}

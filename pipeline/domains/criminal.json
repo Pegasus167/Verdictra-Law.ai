@@ -1,0 +1,100 @@
+{
+  "name": "Criminal Law",
+  "description": "Criminal cases, FIR, bail, charge sheet, trial, conviction, appeal",
+
+  "gliner_labels": [
+    "FIR",
+    "First Information Report",
+    "Accused",
+    "Complainant",
+    "Victim",
+    "Witness",
+    "Public Prosecutor",
+    "Defence Counsel",
+    "Investigating Officer",
+    "Police Station",
+    "Charge Sheet",
+    "Challan",
+    "Cognizance",
+    "Bail",
+    "Anticipatory Bail",
+    "Remand",
+    "Custody",
+    "Judicial Custody",
+    "Police Custody",
+    "Conviction",
+    "Acquittal",
+    "Sentence",
+    "Fine",
+    "IPC Section",
+    "CrPC Section",
+    "NDPS",
+    "PMLA",
+    "ED",
+    "Enforcement Directorate",
+    "CBI",
+    "Chargesheet",
+    "Evidence",
+    "Exhibit",
+    "Forensic Report",
+    "Panchnama",
+    "Confession",
+    "Statement",
+    "Sessions Court",
+    "Magistrate Court",
+    "Special Court",
+    "Trial Court"
+  ],
+
+  "relationship_vocab": [
+    "ACCUSED_IN",
+    "COMPLAINANT_IN",
+    "WITNESS_IN",
+    "ARRESTED_BY",
+    "INVESTIGATED_BY",
+    "CHARGED_WITH",
+    "CONVICTED_OF",
+    "ACQUITTED_OF",
+    "SENTENCED_TO",
+    "GRANTED_BAIL",
+    "REMANDED_BY",
+    "PROSECUTED_BY",
+    "DEFENDED_BY",
+    "FILED_BY",
+    "COGNIZANCE_TAKEN_BY",
+    "TRIED_AT",
+    "APPEALED_AT"
+  ],
+
+  "heading_patterns": [
+    "FIR",
+    "CHARGE SHEET",
+    "BAIL APPLICATION",
+    "ANTICIPATORY BAIL",
+    "REMAND APPLICATION",
+    "CHARGES",
+    "PROSECUTION CASE",
+    "DEFENCE CASE",
+    "EVIDENCE",
+    "WITNESSES",
+    "JUDGMENT",
+    "SENTENCE",
+    "APPEAL",
+    "REVISION"
+  ],
+
+  "prompt_examples": [
+    {
+      "context": "The accused was arrested by the investigating officer on 15 March 2023",
+      "entity_a": "accused",
+      "entity_b": "investigating officer",
+      "relationship": "ARRESTED_BY"
+    },
+    {
+      "context": "The Sessions Court convicted the accused under Section 302 IPC",
+      "entity_a": "accused",
+      "entity_b": "Section 302 IPC",
+      "relationship": "CONVICTED_OF"
+    }
+  ]
+}

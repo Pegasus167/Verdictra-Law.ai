@@ -1,0 +1,141 @@
+@prefix ex: <http://example.org/ont/case#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# ── Person ─────────────────────────────────────────────────────────────────────
+ex:PersonShape a sh:NodeShape ;
+    sh:targetClass ex:Person ;
+    sh:property [
+        sh:path ex:canonicalName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "Person must have a canonicalName"
+    ] ;
+    sh:property [
+        sh:path ex:sourcePDF ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "Person must reference its source PDF"
+    ] ;
+    sh:property [
+        sh:path ex:sourcePage ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
+        sh:message "Person must have a source page number"
+    ] ;
+    sh:property [
+        sh:path ex:confidence ;
+        sh:datatype xsd:decimal ;
+        sh:minCount 1 ;
+        sh:minInclusive 0.0 ;
+        sh:maxInclusive 1.0 ;
+        sh:message "Confidence must be between 0.0 and 1.0"
+    ] .
+
+# ── Organization ───────────────────────────────────────────────────────────────
+ex:OrganizationShape a sh:NodeShape ;
+    sh:targetClass ex:Organization ;
+    sh:property [
+        sh:path ex:canonicalName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "Organization must have a canonicalName"
+    ] ;
+    sh:property [
+        sh:path ex:sourcePDF ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] ;
+    sh:property [
+        sh:path ex:sourcePage ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1
+    ] ;
+    sh:property [
+        sh:path ex:confidence ;
+        sh:datatype xsd:decimal ;
+        sh:minCount 1 ;
+        sh:minInclusive 0.0 ;
+        sh:maxInclusive 1.0
+    ] .
+
+# ── Court ──────────────────────────────────────────────────────────────────────
+ex:CourtShape a sh:NodeShape ;
+    sh:targetClass ex:Court ;
+    sh:property [
+        sh:path ex:canonicalName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] ;
+    sh:property [
+        sh:path ex:sourcePDF ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] .
+
+# ── Legal Proceeding ───────────────────────────────────────────────────────────
+ex:LegalProceedingShape a sh:NodeShape ;
+    sh:targetClass ex:LegalProceeding ;
+    sh:property [
+        sh:path ex:canonicalName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "LegalProceeding must have a canonicalName"
+    ] ;
+    sh:property [
+        sh:path ex:sourcePDF ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] ;
+    sh:property [
+        sh:path ex:sourcePage ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1
+    ] .
+
+# ── Demand ─────────────────────────────────────────────────────────────────────
+ex:DemandShape a sh:NodeShape ;
+    sh:targetClass ex:Demand ;
+    sh:property [
+        sh:path ex:canonicalName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] ;
+    sh:property [
+        sh:path ex:sourcePDF ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] ;
+    sh:property [
+        sh:path ex:sourcePage ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1
+    ] .
+
+# ── Transaction ────────────────────────────────────────────────────────────────
+ex:TransactionShape a sh:NodeShape ;
+    sh:targetClass ex:Transaction ;
+    sh:property [
+        sh:path ex:canonicalName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] ;
+    sh:property [
+        sh:path ex:sourcePDF ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] .
+
+# ── Asset ──────────────────────────────────────────────────────────────────────
+ex:AssetShape a sh:NodeShape ;
+    sh:targetClass ex:Asset ;
+    sh:property [
+        sh:path ex:canonicalName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] ;
+    sh:property [
+        sh:path ex:sourcePDF ;
+        sh:datatype xsd:string ;
+        sh:minCount 1
+    ] .

@@ -1,0 +1,95 @@
+{
+  "name": "Labour & Employment",
+  "description": "Industrial disputes, termination, retrenchment, labour court, workmen compensation",
+
+  "gliner_labels": [
+    "Employee",
+    "Worker",
+    "Workman",
+    "Employer",
+    "Management",
+    "Trade Union",
+    "Labour Court",
+    "Industrial Tribunal",
+    "CGIT",
+    "Central Government Industrial Tribunal",
+    "Labour Commissioner",
+    "Conciliation Officer",
+    "Arbitrator",
+    "Employment Agreement",
+    "Appointment Letter",
+    "Termination Order",
+    "Dismissal Order",
+    "Chargesheet",
+    "Domestic Enquiry",
+    "Enquiry Officer",
+    "Show Cause Notice",
+    "Retrenchment",
+    "Layoff",
+    "Closure",
+    "Strike",
+    "Lockout",
+    "Gratuity",
+    "Provident Fund",
+    "EPF",
+    "ESIC",
+    "Bonus",
+    "Wages",
+    "Salary",
+    "Arrears",
+    "Back Wages",
+    "Reinstatement",
+    "Compensation",
+    "Industrial Dispute",
+    "Reference",
+    "Award",
+    "Workmen Compensation"
+  ],
+
+  "relationship_vocab": [
+    "EMPLOYED_BY",
+    "TERMINATED_BY",
+    "DISMISSED_BY",
+    "RETRENCHED_BY",
+    "REPRESENTED_BY",
+    "FILED_COMPLAINT_AGAINST",
+    "AWARDED_TO",
+    "REINSTATED_BY",
+    "REFERRED_TO",
+    "CONCILIATED_BY",
+    "ARBITRATED_BY",
+    "MEMBER_OF",
+    "PAID_BY"
+  ],
+
+  "heading_patterns": [
+    "APPOINTMENT LETTER",
+    "EMPLOYMENT AGREEMENT",
+    "TERMINATION ORDER",
+    "CHARGESHEET",
+    "DOMESTIC ENQUIRY",
+    "SHOW CAUSE NOTICE",
+    "RETRENCHMENT",
+    "INDUSTRIAL DISPUTE",
+    "REFERENCE",
+    "AWARD",
+    "LABOUR COURT ORDER",
+    "STRIKE NOTICE",
+    "CLOSURE NOTICE"
+  ],
+
+  "prompt_examples": [
+    {
+      "context": "The workman was terminated by the management without following due process",
+      "entity_a": "workman",
+      "entity_b": "management",
+      "relationship": "TERMINATED_BY"
+    },
+    {
+      "context": "The Industrial Tribunal awarded reinstatement with full back wages to the petitioner",
+      "entity_a": "reinstatement",
+      "entity_b": "petitioner",
+      "relationship": "AWARDED_TO"
+    }
+  ]
+}

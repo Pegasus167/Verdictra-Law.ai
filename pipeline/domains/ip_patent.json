@@ -1,0 +1,89 @@
+{
+  "name": "Intellectual Property & Patents",
+  "description": "Patents, trademarks, copyright, trade secrets, licensing disputes",
+
+  "gliner_labels": [
+    "Patent",
+    "Patent Application",
+    "Patent Number",
+    "Trademark",
+    "Trademark Registration",
+    "Copyright",
+    "Trade Secret",
+    "Design Registration",
+    "Geographical Indication",
+    "License Agreement",
+    "Exclusive License",
+    "Non-exclusive License",
+    "Sublicense",
+    "Royalty",
+    "Infringement",
+    "Passing Off",
+    "Counterfeiting",
+    "Prior Art",
+    "Novelty",
+    "Inventive Step",
+    "Claims",
+    "Specification",
+    "Patent Office",
+    "Trademark Registry",
+    "IPAB",
+    "IPD",
+    "Inventor",
+    "Assignee",
+    "Licensee",
+    "Licensor",
+    "Patentee",
+    "Trade Name",
+    "Brand Name",
+    "Domain Name",
+    "Software",
+    "Technology",
+    "Know-how"
+  ],
+
+  "relationship_vocab": [
+    "PATENTED_BY",
+    "LICENSED_TO",
+    "LICENSED_FROM",
+    "ASSIGNED_TO",
+    "INFRINGED_BY",
+    "REGISTERED_BY",
+    "OWNED_BY",
+    "DEVELOPED_BY",
+    "SUBLICENSED_TO",
+    "CANCELLED_BY",
+    "OPPOSED_BY",
+    "GRANTED_BY"
+  ],
+
+  "heading_patterns": [
+    "PATENT SPECIFICATION",
+    "CLAIMS",
+    "PRIOR ART",
+    "LICENSE AGREEMENT",
+    "ROYALTY",
+    "INFRINGEMENT",
+    "PASSING OFF",
+    "TRADEMARK APPLICATION",
+    "OPPOSITION",
+    "REVOCATION",
+    "COPYRIGHT NOTICE",
+    "ASSIGNMENT"
+  ],
+
+  "prompt_examples": [
+    {
+      "context": "The patent was assigned to XYZ Corp by the inventor Dr. Patel",
+      "entity_a": "patent",
+      "entity_b": "XYZ Corp",
+      "relationship": "ASSIGNED_TO"
+    },
+    {
+      "context": "ABC Ltd licensed the technology to DEF Ltd under a non-exclusive license",
+      "entity_a": "technology",
+      "entity_b": "DEF Ltd",
+      "relationship": "LICENSED_TO"
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "name": "Property & Real Estate",
+  "description": "Property disputes, land acquisition, lease, SARFAESI auctions, development authority cases",
+
+  "gliner_labels": [
+    "Plot Number",
+    "Survey Number",
+    "CTS Number",
+    "Land Parcel",
+    "Industrial Plot",
+    "Residential Plot",
+    "Lease Agreement",
+    "Leave and License",
+    "Title Deed",
+    "Sale Deed",
+    "Conveyance Deed",
+    "Allotment Letter",
+    "Possession Letter",
+    "Completion Certificate",
+    "Occupancy Certificate",
+    "Development Authority",
+    "Industrial Development Corporation",
+    "MIDC",
+    "CIDCO",
+    "MHADA",
+    "Builder",
+    "Developer",
+    "Allottee",
+    "Leaseholder",
+    "Sublessee",
+    "Mortgagor",
+    "Mortgagee",
+    "Auction Purchaser",
+    "SARFAESI Auction",
+    "ULC Charge",
+    "Premium",
+    "Ground Rent",
+    "Lease Rent",
+    "Transfer Charge",
+    "Non Agricultural Permission",
+    "NA Order",
+    "Land Use",
+    "FSI",
+    "TDR",
+    "Collector",
+    "Tehsildar",
+    "Revenue Record",
+    "7/12 Extract",
+    "Mutation Entry"
+  ],
+
+  "relationship_vocab": [
+    "LEASED_TO",
+    "LEASED_FROM",
+    "ALLOTTED_TO",
+    "TRANSFERRED_TO",
+    "TRANSFERRED_FROM",
+    "SUBLET_TO",
+    "OWNED_BY",
+    "MORTGAGED_WITH",
+    "AUCTIONED_BY",
+    "SOLD_TO",
+    "PURCHASED_BY",
+    "POSSESSED_BY",
+    "DEVELOPED_BY",
+    "DEMANDED_FROM",
+    "CHARGED_ON",
+    "SECURED_BY",
+    "REGISTERED_WITH",
+    "APPROVED_BY",
+    "CANCELLED_BY"
+  ],
+
+  "heading_patterns": [
+    "LEASE DEED",
+    "LEASE AGREEMENT",
+    "ALLOTMENT",
+    "TRANSFER OF LEASE",
+    "ULC CHARGES",
+    "PREMIUM",
+    "AUCTION",
+    "SARFAESI",
+    "PLOT DETAILS",
+    "LAND PARTICULARS",
+    "TITLE",
+    "OWNERSHIP",
+    "POSSESSION",
+    "DEVELOPMENT",
+    "BUILDING PERMISSION",
+    "COMPLETION CERTIFICATE",
+    "NA ORDER",
+    "REVENUE RECORDS"
+  ],
+
+  "prompt_examples": [
+    {
+      "context": "MIDC allotted Plot D-105 to Bafna Motors vide allotment letter dated 12 March 1995",
+      "entity_a": "MIDC",
+      "entity_b": "Bafna Motors",
+      "relationship": "ALLOTTED_TO"
+    },
+    {
+      "context": "The plot was leased to CELIR LLP following the SARFAESI auction",
+      "entity_a": "plot",
+      "entity_b": "CELIR LLP",
+      "relationship": "LEASED_TO"
+    },
+    {
+      "context": "Union Bank of India mortgaged the industrial plots as security for the loan",
+      "entity_a": "industrial plots",
+      "entity_b": "Union Bank of India",
+      "relationship": "MORTGAGED_WITH"
+    },
+    {
+      "context": "MIDC demanded ULC charges of Rs. 14 crore from CELIR LLP",
+      "entity_a": "MIDC",
+      "entity_b": "CELIR LLP",
+      "relationship": "DEMANDED_FROM"
+    }
+  ]
+}

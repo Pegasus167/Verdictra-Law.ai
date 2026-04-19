@@ -1,0 +1,103 @@
+@prefix ex:   <http://example.org/ont/case#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+# ── Universal Entity Classes ───────────────────────────────────────────────────
+# These cover any legal / financial case type.
+# Do NOT add case-specific classes here — only universal concepts.
+
+ex:Person               a rdfs:Class ; rdfs:comment "Any individual person" .
+ex:Organization         a rdfs:Class ; rdfs:comment "Company, LLP, partnership, firm" .
+ex:Government           a rdfs:Class ; rdfs:comment "State or central government body" .
+ex:Court                a rdfs:Class ; rdfs:comment "Any judicial or quasi-judicial body" .
+ex:StatutoryBody        a rdfs:Class ; rdfs:comment "Statutory authority (MIDC, SEBI, RBI etc.)" .
+ex:FinancialInstitution a rdfs:Class ; rdfs:comment "Bank, NBFC, insurance company" .
+ex:Asset                a rdfs:Class ; rdfs:comment "Physical or intellectual property" .
+ex:Agreement            a rdfs:Class ; rdfs:comment "Contract, deed, MOU, tripartite agreement" .
+ex:Demand               a rdfs:Class ; rdfs:comment "Notice, charge, claim demand" .
+ex:LegalProceeding      a rdfs:Class ; rdfs:comment "Case, petition, appeal, writ" .
+ex:Transaction          a rdfs:Class ; rdfs:comment "Any financial movement" .
+ex:Regulation           a rdfs:Class ; rdfs:comment "Act, section, GR, circular, policy" .
+ex:Event                a rdfs:Class ; rdfs:comment "Dated occurrence (auction, NPA, hearing)" .
+ex:Location             a rdfs:Class ; rdfs:comment "Place, jurisdiction, address" .
+ex:Identifier           a rdfs:Class ; rdfs:comment "Case number, ref number, doc reference" .
+ex:Role                 a rdfs:Class ; rdfs:comment "A person's function in the case" .
+
+# ── Universal Properties ───────────────────────────────────────────────────────
+
+# Identity (all entities)
+ex:canonicalName  a rdf:Property ; rdfs:range xsd:string ;
+    rdfs:comment "Normalized name used as the unique merge key in Neo4j" .
+
+ex:schemaType     a rdf:Property ; rdfs:range xsd:string ;
+    rdfs:comment "Universal schema type (Organization, Court etc.)" .
+
+ex:confidence     a rdf:Property ; rdfs:range xsd:decimal ;
+    rdfs:comment "GLiNER extraction confidence score 0.0–1.0" .
+
+# Provenance (all entities — critical for citations)
+ex:sourcePDF      a rdf:Property ; rdfs:range xsd:string ;
+    rdfs:comment "Filename of the source PDF document" .
+
+ex:sourcePage     a rdf:Property ; rdfs:range xsd:integer ;
+    rdfs:comment "1-indexed page number in the source PDF" .
+
+ex:extractedBy    a rdf:Property ; rdfs:range xsd:string ;
+    rdfs:comment "Model/tool that extracted this entity" .
+
+ex:extractionTimestamp a rdf:Property ; rdfs:range xsd:dateTime .
+
+# Text
+ex:hasDate        a rdf:Property ; rdfs:range xsd:dateTime .
+ex:hasAmount      a rdf:Property ; rdfs:range xsd:decimal .
+ex:hasCurrency    a rdf:Property ; rdfs:range xsd:string .
+ex:hasDescription a rdf:Property ; rdfs:range xsd:string .
+ex:context        a rdf:Property ; rdfs:range xsd:string ;
+    rdfs:comment "Surrounding text snippet for disambiguation" .
+
+# Person properties
+ex:hasRole        a rdf:Property ; rdfs:domain ex:Person ; rdfs:range xsd:string .
+
+# Organization properties
+ex:registeredUnder a rdf:Property ; rdfs:domain ex:Organization ; rdfs:range xsd:string .
+ex:hasAddress      a rdf:Property ; rdfs:range xsd:string .
+
+# Legal Proceeding properties
+ex:caseNumber     a rdf:Property ; rdfs:domain ex:LegalProceeding ; rdfs:range xsd:string .
+ex:courtName      a rdf:Property ; rdfs:domain ex:LegalProceeding ; rdfs:range xsd:string .
+ex:filingDate     a rdf:Property ; rdfs:domain ex:LegalProceeding ; rdfs:range xsd:dateTime .
+
+# Transaction properties
+ex:transactionAmount  a rdf:Property ; rdfs:domain ex:Transaction ; rdfs:range xsd:decimal .
+ex:transactionDate    a rdf:Property ; rdfs:domain ex:Transaction ; rdfs:range xsd:dateTime .
+
+# ── Universal Relationships ────────────────────────────────────────────────────
+# Used as Neo4j edge types.
+# Add domain/range as guidance — not enforced at DB level.
+
+ex:FILED_BY         a rdf:Property .   # LegalProceeding → Person/Organization
+ex:ISSUED_BY        a rdf:Property .   # Demand/Document → Organization/Person
+ex:ISSUED_TO        a rdf:Property .   # Demand → Organization/Person
+ex:TRANSFERRED_TO   a rdf:Property .   # Asset/Agreement → Organization
+ex:LEASED_TO        a rdf:Property .   # Asset → Organization
+ex:MORTGAGED_WITH   a rdf:Property .   # Asset → FinancialInstitution
+ex:HOLDS_CHARGE_OVER a rdf:Property .  # FinancialInstitution → Asset
+ex:RULED_FOR        a rdf:Property .   # Court → Person/Organization
+ex:RULED_AGAINST    a rdf:Property .   # Court → Person/Organization
+ex:DIRECTED         a rdf:Property .   # Court → Organization/Person
+ex:OVERSEES         a rdf:Property .   # Government → StatutoryBody
+ex:INVOLVES         a rdf:Property .   # LegalProceeding → Person/Organization
+ex:AFFILIATED_WITH  a rdf:Property .   # Person → Organization
+ex:DIRECTOR_OF      a rdf:Property .   # Person → Organization
+ex:ADVOCATES_FOR    a rdf:Property .   # Person → Person/Organization
+ex:SUBLET_TO        a rdf:Property .   # Organization → Organization (subletting)
+ex:OWNS             a rdf:Property .   # Person/Organization → Asset
+ex:HAS_OFFICER      a rdf:Property .   # StatutoryBody → Person
+ex:RELATED_TO       a rdf:Property .   # Generic fallback
+ex:CO_OCCURS_WITH   a rdf:Property .   # Weak co-occurrence (upgraded by LLM)
+
+# ── Provenance ─────────────────────────────────────────────────────────────────
+prov:wasDerivedFrom  a rdf:Property ; rdfs:domain prov:Entity ; rdfs:range prov:Entity .
+prov:wasGeneratedBy  a rdf:Property ; rdfs:domain prov:Entity ; rdfs:range prov:Activity .

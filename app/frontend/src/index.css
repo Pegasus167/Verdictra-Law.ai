@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --bg: #080b12;
+    --surface: #0e1420;
+    --surface2: #131926;
+    --border: #1c2535;
+    --border2: #243044;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+}
+
+@layer utilities {
+  .text-muted { color: var(--muted); }
+  .text-muted2 { color: var(--muted2); }
+  .bg-surface { background: var(--surface); }
+  .bg-surface2 { background: var(--surface2); }
+  .border-default { border-color: var(--border); }
+  .border-default2 { border-color: var(--border2); }
+}
