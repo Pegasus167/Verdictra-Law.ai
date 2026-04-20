@@ -534,6 +534,100 @@ async def confirm_all(case_id: str):
 
     return JSONResponse({"status": "committed", "count": len(staged)})
 
+# ── Add both endpoints to resolver_ui/app.py ──────────────────────────────────
+# Place after the /confirm-all endpoint
+
+
+@app.delete("/cases/{case_id}")
+async def delete_case(case_id: str):
+    """
+    Delete a case completely:
+    - Wipes all Neo4j nodes and relationships for this case_id
+    - Deletes the case folder from disk
+    """
+    import shutil
+
+    errors = []
+
+    # 1. Wipe Neo4j nodes for this case
+    try:
+        from pipeline.graph_builder import GraphBuilder
+        with GraphBuilder() as builder:
+            builder.clear_case(case_id)
+        logger.info(f"Neo4j nodes cleared for case '{case_id}'")
+    except Exception as e:
+        logger.error(f"Neo4j clear failed for '{case_id}': {e}")
+        errors.append(f"Graph clear failed: {e}")
+
+    # 2. Delete case folder from disk
+    try:
+        case_dir = settings.case_path(case_id)
+        if case_dir.exists():
+            shutil.rmtree(case_dir)
+            logger.info(f"Case folder deleted: {case_dir}")
+        else:
+            logger.warning(f"Case folder not found: {case_dir}")
+    except Exception as e:
+        logger.error(f"Folder delete failed for '{case_id}': {e}")
+        errors.append(f"Folder delete failed: {e}")
+
+    # 3. Clear pipeline cache so next upload doesn't use stale state
+    cache_key = f"pipeline_{case_id}"
+    if hasattr(app.state, cache_key):
+        delattr(app.state, cache_key)
+
+    if errors:
+        return JSONResponse(
+            {"status": "partial", "case_id": case_id, "errors": errors},
+            status_code=207,
+        )
+
+    return JSONResponse({"status": "deleted", "case_id": case_id})
+
+
+@app.post("/retry/{case_id}")
+async def retry_ingestion(case_id: str):
+    """
+    Retry a failed ingestion.
+    Resets metadata status to processing and re-fires the pipeline.
+    """
+    try:
+        meta = load_metadata(case_id)
+    except Exception:
+        return JSONResponse({"error": "Case not found"}, status_code=404)
+
+    pdf_filename = meta.get("pdf_filename", f"{case_id}.pdf")
+    pdf_path     = settings.case_path(case_id) / pdf_filename
+
+    if not pdf_path.exists():
+        return JSONResponse(
+            {"error": f"PDF not found at {pdf_path}"},
+            status_code=404,
+        )
+
+    # Reset metadata
+    meta["status"]        = "processing"
+    meta["current_stage"] = 1
+    meta.pop("error", None)
+    with open(settings.case_metadata(case_id), "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
+
+    # Clear any stale pipeline cache
+    cache_key = f"pipeline_{case_id}"
+    if hasattr(app.state, cache_key):
+        delattr(app.state, cache_key)
+
+    # Re-fire ingestion in background thread
+    thread = threading.Thread(
+        target=_run_ingestion_background,
+        args=(str(pdf_path), case_id),
+        daemon=True,
+        name=f"ingestion-retry-{case_id}",
+    )
+    thread.start()
+    logger.info(f"Retry ingestion started for {case_id}")
+
+    return JSONResponse({"status": "retrying", "case_id": case_id})
 
 # ── Ask — SSE streaming ────────────────────────────────────────────────────────
 
