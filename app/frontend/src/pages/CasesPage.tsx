@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Upload, Scale, Clock, AlertCircle, Loader2 } from 'lucide-react'
+import { Upload, Scale, Clock, AlertCircle, Loader2, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { formatDate } from '../lib/utils'
 import type { Case } from '../types'
@@ -26,6 +26,7 @@ export default function CasesPage() {
   const [file, setFile]         = useState<File | null>(null)
   const [domain, setDomain]     = useState('constitutional')
   const [error, setError]       = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const fileRef                 = useRef<HTMLInputElement>(null)
   const navigate                = useNavigate()
 
@@ -59,6 +60,21 @@ export default function CasesPage() {
     if (c.status === 'ready') navigate(`/query/${c.case_id}`)
     else if (c.status === 'review') navigate(`/review/${c.case_id}`)
     else navigate(`/processing/${c.case_id}`)
+  }
+
+  async function deleteCase(e: React.MouseEvent, caseId: string) {
+    e.stopPropagation()
+    if (!window.confirm('Delete this case? This cannot be undone.')) return
+    setDeletingId(caseId)
+    try {
+      const res = await fetch(`/api/cases/${caseId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      setCases(prev => prev.filter(c => c.case_id !== caseId))
+    } catch {
+      setError('Failed to delete case. Please try again.')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   // Fallback domain options if /domains endpoint not yet available
@@ -259,6 +275,16 @@ export default function CasesPage() {
                   </div>
                   <span style={{ color: 'var(--muted)' }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  <button
+                    onClick={e => deleteCase(e, c.case_id)}
+                    disabled={deletingId === c.case_id}
+                    className="w-7 h-7 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                    style={{ color: '#ef4444', border: '1px solid #7f1d1d' }}
+                    title="Delete case">
+                    {deletingId === c.case_id
+                      ? <Loader2 size={12} className="animate-spin" />
+                      : <Trash2 size={12} />}
+                  </button>
                 </button>
               )
             })}

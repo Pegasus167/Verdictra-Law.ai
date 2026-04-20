@@ -71,7 +71,9 @@ async def on_startup():
                 stale.unlink()
                 logger.info(f"Cleared stale staged_decisions for {case_dir.name}")
 
-
+@app.get("/health")
+async def health():
+    return JSONResponse({"status": "ok", "service": "verdictra-law-ai"})
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def load_metadata(case_id: str) -> dict:

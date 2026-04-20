@@ -85,6 +85,11 @@ export const api = {
     if (!res.ok) return []
     return res.json()
   },
+
+  async deleteCase(caseId: string): Promise<void> {
+    const res = await fetch(`${BASE}/cases/${caseId}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error('Delete failed')
+  },
 }
 
 // ── SSE streaming for /ask ────────────────────────────────────────────────────

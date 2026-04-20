@@ -2,11 +2,14 @@ export interface Case {
   case_id: string
   case_name: string
   pdf_filename: string
-  status: 'processing' | 'review' | 'ready'
+  status: 'processing' | 'review' | 'ready' | 'failed'
   created_at: string
   pages: number | null
-  kge_status?: 'not_started' | 'training' | 'ready' | 'failed'
-  has_tree?: boolean
+  kge_status: string
+  has_tree: boolean
+  domain?: string
+  current_stage?: number
+  error?: string
 }
 
 export interface Citation {

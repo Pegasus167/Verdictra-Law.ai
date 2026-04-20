@@ -39,6 +39,8 @@ data/embeddings/
 data/tree_index/
 data/chroma_db/
 
+cases/
+
 # ── Model cache — large files, re-downloaded automatically ────────────────────
 models/
 *.bin

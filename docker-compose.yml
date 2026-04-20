@@ -1,0 +1,65 @@
+# ── Verdictra LAW.ai — Docker Compose ─────────────────────────────────────────
+# Local dev:   docker-compose up --build
+# Production:  docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: verdictra-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Neo4j
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USERNAME=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - NEO4J_DATABASE=${NEO4J_DATABASE:-neo4j}
+      # OpenAI
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # App
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - TESSERACT_PATH=/usr/bin/tesseract
+    volumes:
+      # Cases data persists across container restarts
+      - ./cases:/app/cases
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: verdictra-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Nginx reverse proxy — handles routing between frontend and backend
+  # In production this also terminates HTTPS
+  nginx:
+    image: nginx:alpine
+    container_name: verdictra-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+      - frontend
+    profiles:
+      - production

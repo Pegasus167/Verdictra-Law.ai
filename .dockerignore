@@ -1,0 +1,53 @@
+# ── Node modules — never send to Docker, installed during build ───────────────
+app/frontend/node_modules/
+node_modules/
+
+# ── Case data — mounted as volume in production ───────────────────────────────
+cases/
+
+# ── Model cache — large files downloaded at runtime ──────────────────────────
+models/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.onnx
+
+# ── Data outputs ──────────────────────────────────────────────────────────────
+data/embeddings/
+data/chroma_db/
+data/json_output/
+data/ocr_output/
+
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.*
+
+# ── Git ───────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── Python cache ─────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# ── Frontend build output ────────────────────────────────────────────────────
+app/frontend/dist/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.cursor/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Test files ────────────────────────────────────────────────────────────────
+test_*.py
