@@ -223,13 +223,13 @@ def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True):
                 if domain_labels:
                     extractor = EntityExtractor(
                         model_name=settings.gliner_model,
-                        threshold=0.4,
+                        threshold=0.5,
                         labels=domain_labels,
                     )
                 else:
                     extractor = EntityExtractor(
                         model_name=settings.gliner_model,
-                        threshold=0.4,
+                        threshold=0.5,
                     )
 
                 # Stage 1: PDF → Markdown

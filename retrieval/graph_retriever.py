@@ -30,6 +30,10 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from torch import norm
+
+import query
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
@@ -248,7 +252,7 @@ class GraphRetriever:
                 maps = pickle.load(f)
             self._entity_to_idx = maps["entity_to_idx"]
             self._idx_to_entity = maps["idx_to_entity"]
-            self._text_encoder  = SentenceTransformer(settings.embedding_model)
+            self._text_encoder  = None  # KGE index uses entity embeddings not text encoding
             self._faiss_loaded  = True
             logger.info(
                 f"FAISS index loaded for case '{case_id}': "
@@ -673,15 +677,54 @@ class GraphRetriever:
     # ── FAISS (optional) ───────────────────────────────────────────────────────
 
     def _faiss_search(
-        self, query: str, top_k: int
+    self, query: str, top_k: int
     ) -> tuple[dict[str, float], list[float]]:
-        query_vec = self._text_encoder.encode(
-            [query], normalize_embeddings=True
-        ).astype(np.float32)
+        """
+        Search FAISS index using KGE entity embeddings.
+    
+         of encoding query text (wrong — different vector space),
+        find seed entities from query tokens, look up their KGE embeddings,
+        average them, and use that as the search vector.
+        """
+        # Find seed entities from query using token overlap
+        query_tokens = _tokenize(query)
+        seed_names = []
+        for name in self._all_canonical_names:
+            name_tokens = _tokenize(name)
+            if query_tokens & name_tokens:
+                seed_names.append(name)
+            if len(seed_names) >= 5:
+                break
+
+        # If no token matches, use high-degree nodes as seeds
+        if not seed_names:
+            seed_names = [n["name"] for n in self._high_degree_nodes[:3]]
+
+        if not seed_names:
+            return {}, []
+
+        # Look up KGE embedding vectors for seed entities
+        seed_vectors = []
+        for name in seed_names:
+            idx = self._entity_to_idx.get(name)
+            if idx is not None:
+                # Reconstruct vector from FAISS index
+                vec = self._faiss_index.reconstruct(int(idx))
+                seed_vectors.append(vec)
+
+        if not seed_vectors:
+            return {}, []
+
+        # Average seed vectors as query representation
+        query_vec = np.mean(seed_vectors, axis=0, keepdims=True).astype(np.float32)
+        # Normalize for cosine similarity
+        norm = np.linalg.norm(query_vec)
+        if norm > 0:
+            query_vec = query_vec / norm
 
         distances, indices = self._faiss_index.search(query_vec, top_k)
         similarities: dict[str, float] = {}
-        for dist, idx in zip(distances[0], indices[0]):
+        for dist, idx in zip(distances[0], np.indices[0]):
             if idx == -1:
                 continue
             name = self._idx_to_entity.get(int(idx))
