@@ -13,7 +13,7 @@ const SUGGESTED = [
 ]
 
 const NOTE_COLORS = ['#fef08a', '#86efac', '#93c5fd', '#f9a8d4', '#fdba74']
-const BASE = 'http://localhost:8000'
+const BASE = '' // '' for production, 'http://localhost:8000' for development
 
 interface Annotation {
   id: string

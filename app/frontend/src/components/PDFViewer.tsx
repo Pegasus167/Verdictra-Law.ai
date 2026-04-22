@@ -39,7 +39,7 @@ interface PDFViewerProps {
 
 const PDFJS_CDN     = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
 const PDFJS_WORKER  = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-const BASE          = 'http://localhost:8000'
+const BASE          = ''
 const NOTE_COLORS   = ['#fef08a', '#86efac', '#93c5fd', '#f9a8d4', '#fdba74']
 const DEFAULT_SCALE = 1.4
 
