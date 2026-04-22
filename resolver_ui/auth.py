@@ -157,7 +157,7 @@ async def login(request: LoginRequest):
     """
     user = USERS.get(request.username)
 
-    if not user or not pwd_context.verify(request.password, user["password_hash"]):
+    if not user or user["password"] != request.password:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
