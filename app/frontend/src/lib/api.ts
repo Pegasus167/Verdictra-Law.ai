@@ -2,22 +2,37 @@ import type { Case, ResolutionState, StagedDecision } from '../types'
 
 const BASE = '/api'
 
+// ── Auth helpers ───────────────────────────────────────────────────────────────
+
+function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const token = localStorage.getItem('token')
+  return token
+    ? { ...extra, Authorization: `Bearer ${token}` }
+    : extra
+}
+
+function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  return fetch(url, {
+    ...options,
+    headers: authHeaders((options.headers as Record<string, string>) ?? {}),
+  })
+}
+
 // ── Cases ──────────────────────────────────────────────────────────────────────
 
 export const api = {
   async getCases(): Promise<Case[]> {
-    const res = await fetch(`${BASE}/cases`)
+    const res = await authFetch(`${BASE}/cases`)
     if (!res.ok) throw new Error('Failed to fetch cases')
     return res.json()
   },
 
   async getCase(caseId: string): Promise<Case> {
-    const res = await fetch(`${BASE}/cases/${caseId}`)
+    const res = await authFetch(`${BASE}/cases/${caseId}`)
     if (!res.ok) throw new Error('Failed to fetch case')
     return res.json()
   },
 
-  // Upload new case — now accepts domain
   async uploadCase(
     caseName: string,
     file: File,
@@ -27,34 +42,31 @@ export const api = {
     form.append('case_name', caseName)
     form.append('pdf_file', file)
     form.append('domain', domain)
-    const res = await fetch(`${BASE}/upload`, { method: 'POST', body: form })
+    const res = await authFetch(`${BASE}/upload`, { method: 'POST', body: form })
     if (!res.ok) throw new Error('Upload failed')
     return res.json()
   },
 
-  // Get available domains for upload dropdown
   async getDomains(): Promise<Array<{ id: string; name: string; description: string }>> {
-    const res = await fetch(`${BASE}/domains`)
+    const res = await authFetch(`${BASE}/domains`)
     if (!res.ok) return []
     return res.json()
   },
 
   async getKgeStatus(caseId: string): Promise<{ kge_status: string }> {
-    const res = await fetch(`${BASE}/kge-status/${caseId}`)
+    const res = await authFetch(`${BASE}/kge-status/${caseId}`)
     if (!res.ok) throw new Error('Failed to fetch KGE status')
     return res.json()
   },
 
-  // ── Resolver ────────────────────────────────────────────────────────────────
-
   async getResolutionState(caseId: string): Promise<ResolutionState> {
-    const res = await fetch(`${BASE}/resolution-state/${caseId}`)
+    const res = await authFetch(`${BASE}/resolution-state/${caseId}`)
     if (!res.ok) throw new Error('Failed to fetch resolution state')
     return res.json()
   },
 
   async getStagedDecisions(caseId: string): Promise<Record<string, StagedDecision>> {
-    const res = await fetch(`${BASE}/staged-status/${caseId}`)
+    const res = await authFetch(`${BASE}/staged-status/${caseId}`)
     if (!res.ok) return {}
     return res.json()
   },
@@ -66,7 +78,7 @@ export const api = {
     decision: 'MERGE' | 'KEEP' | 'SKIP',
     buckets: Record<string, string[]>
   ): Promise<void> {
-    const res = await fetch(`${BASE}/stage/${caseId}`, {
+    const res = await authFetch(`${BASE}/stage/${caseId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idx, group_id: groupId, decision, buckets }),
@@ -75,19 +87,19 @@ export const api = {
   },
 
   async confirmAll(caseId: string): Promise<{ status: string; count: number }> {
-    const res = await fetch(`${BASE}/confirm-all/${caseId}`, { method: 'POST' })
+    const res = await authFetch(`${BASE}/confirm-all/${caseId}`, { method: 'POST' })
     if (!res.ok) throw new Error('Failed to confirm decisions')
     return res.json()
   },
 
   async getConversationHistory(caseId: string) {
-    const res = await fetch(`${BASE}/conversation/${caseId}`)
+    const res = await authFetch(`${BASE}/conversation/${caseId}`)
     if (!res.ok) return []
     return res.json()
   },
 
   async deleteCase(caseId: string): Promise<void> {
-    const res = await fetch(`${BASE}/cases/${caseId}`, { method: 'DELETE' })
+    const res = await authFetch(`${BASE}/cases/${caseId}`, { method: 'DELETE' })
     if (!res.ok) throw new Error('Delete failed')
   },
 }
@@ -111,10 +123,14 @@ export function askQuestion(
   onError: (err: string) => void
 ): AbortController {
   const controller = new AbortController()
+  const token = localStorage.getItem('token')
 
   fetch(`/ask/${caseId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ question }),
     signal: controller.signal,
   })

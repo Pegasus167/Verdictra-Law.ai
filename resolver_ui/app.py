@@ -40,6 +40,7 @@ from fastapi.responses import (
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from fastapi.security import HTTPBearer
 
 from config import settings
 
@@ -47,6 +48,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="LAW.ai")
+from resolver_ui.auth import require_auth, router as auth_router
+from fastapi import Depends
+app.include_router(auth_router)
 templates = Jinja2Templates(directory="resolver_ui/templates")
 
 # CORS — allow React frontend on port 3000
@@ -200,8 +204,12 @@ def _run_ingestion_background(pdf_path: str, case_id: str):
 # ── JSON API endpoints ─────────────────────────────────────────────────────────
 
 @app.get("/cases")
-async def list_cases():
-    return JSONResponse(all_cases())
+async def list_cases(user=Depends(require_auth)):
+    cases = all_cases()
+    # Admin sees all cases - lawyers only see their own
+    if user.role != "admin":
+        cases = [c for c in cases if c.get("created_by") == user.username]
+    return JSONResponse(cases)
 
 
 @app.get("/cases/{case_id}")
@@ -401,6 +409,7 @@ async def upload_case(
     case_name: str = Form(...),
     pdf_file:  UploadFile = File(...),
     domain:    str = Form(default="constitutional"),
+    user=Depends(require_auth),
 ):
     # Sanitize case_id from name
     case_id = re.sub(r"[^a-z0-9_]", "_", case_name.lower().strip())
@@ -425,6 +434,7 @@ async def upload_case(
         "pages":        None,
         "kge_status":   "not_started",
         "has_tree":     False,
+        "created_by":   user.username,
     }
     with open(settings.case_metadata(case_id), "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
@@ -539,12 +549,22 @@ async def confirm_all(case_id: str):
 
 
 @app.delete("/cases/{case_id}")
-async def delete_case(case_id: str):
+async def delete_case(case_id: str, user=Depends(require_auth)):
     """
     Delete a case completely:
     - Wipes all Neo4j nodes and relationships for this case_id
     - Deletes the case folder from disk
     """
+    # Check ownership
+    try: 
+        meta = load_metadata(case_id)
+        if user.role != "admin" and meta.get("created_by") != user.username:
+            return JSONResponse(
+                {"error": "Not authorized to delete this case"},
+                status_code=403,
+            )
+    except Exception:
+        pass
     import shutil
 
     errors = []
@@ -632,7 +652,7 @@ async def retry_ingestion(case_id: str):
 # ── Ask — SSE streaming ────────────────────────────────────────────────────────
 
 @app.post("/ask/{case_id}")
-async def ask(case_id: str, request: Request):
+async def ask(case_id: str, request: Request, user=Depends(require_auth)):
     import asyncio
 
     body     = await request.json()
@@ -710,7 +730,7 @@ async def ask(case_id: str, request: Request):
 # ── DEEP RESEARCH endpoint ──
 
 @app.post("/deep-research/{case_id}")
-async def deep_research(case_id: str, request: Request):
+async def deep_research(case_id: str, request: Request, user=Depends(require_auth)):
     """
     Deep Research mode — comprehensive analysis using all available context.
     Activates when lawyer clicks the Deep Research button in QueryPage.
