@@ -256,6 +256,9 @@ def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True):
                 chunks            = tree_to_page_chunks(tree, pdf_path.name)
                 all_entities      = []
                 all_relationships = []
+                # Instantiate validator once per case
+                from pipeline.validator import EntityValidator
+                validator = EntityValidator(min_confidence=0.5, min_name_length=3)
 
                 for i in range(0, len(chunks), PAGE_BATCH_SIZE):
                     batch      = chunks[i: i + PAGE_BATCH_SIZE]
@@ -266,6 +269,20 @@ def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True):
                         sections=[],
                     )
                     batch_result = extractor.extract_from_tree(batch_tree)
+                    
+                    # ── Validate entities before writing to Neo4j ──────────────
+                    valid_entities, rejected = validator.validate_batch(
+                        batch_result.entities
+                    )
+                    if rejected:
+                        rejection_stats = validator.get_stats(rejected)
+                        logger.info(f"  Validation rejected {len(rejected)} entities: {rejection_stats}")
+
+                    # Replace entities in batch_result with validated ones only
+                    batch_result.entities = valid_entities
+                    # Also filter unique_entities
+                    batch_result._unique_entities = None  # force recompute
+
                     builder.build_from_extraction(batch_result, case_id=_case_id)
                     all_entities.extend(batch_result.entities)
                     all_relationships.extend(batch_result.relationships)
