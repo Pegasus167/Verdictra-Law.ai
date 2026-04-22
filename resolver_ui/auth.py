@@ -41,21 +41,36 @@ JWT_EXPIRE_HOURS = 24
 # Passwords are bcrypt hashed
 # To generate a hash: python -c "from passlib.context import CryptContext; print(CryptContext(['bcrypt']).hash('yourpassword'))"
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = None # Not used - plain comparison below
 
 # Add your lawyer users here
 # Format: "username": {"password_hash": "...", "name": "Display Name", "role": "lawyer"}
 USERS = {
     "admin": {
-        "password_hash": pwd_context.hash(os.environ.get("ADMIN_PASSWORD", "verdictra2024")),
-        "name":          "Administrator",
-        "role":          "admin",
+        "password":  os.environ.get("ADMIN_PASSWORD", "verdictra2024"),
+        "name":      "Administrator",
+        "role":      "admin",
     },
     "lawyer1": {
-        "password_hash": pwd_context.hash(os.environ.get("LAWYER1_PASSWORD", "lawyer2024")),
-        "name":          "Lawyer 1",
-        "role":          "lawyer",
+        "password":  os.environ.get("LAWYER1_PASSWORD", "lawyer2024"),
+        "name":      "Lawyer 1",
+        "role":      "lawyer",
     },
+    "Shlok":{
+        "password":  os.environ.get("LAWYER2_PASSWORD", "lawyer2024"),
+        "name":      "Shlok",
+        "role":      "lawyer",
+    },
+    "Tapasya":{
+        "password":  os.environ.get("LAWYER3_PASSWORD", "lawyer2024"),
+        "name":      "Tapasya",
+        "role":      "lawyer",
+    },
+    "Aditya":{
+        "password":  os.environ.get("LAWYER4_PASSWORD", "lawyer2024"),
+        "name":      "Aditya",
+        "role":      "lawyer",
+    }
 }
 
 
