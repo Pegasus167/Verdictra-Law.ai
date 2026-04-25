@@ -107,3 +107,4 @@ temp/
 
 # ── PyKEEN outputs ────────────────────────────────────────────────────────────
 pykeen_results/
+test_&_versions/
