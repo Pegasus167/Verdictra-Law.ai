@@ -144,6 +144,12 @@ You have been given ALL available information extracted from the case document:
 Your task is to produce a COMPREHENSIVE, WELL-STRUCTURED research report covering
 everything that can be known about this case from the provided information.
 
+CRITICAL: Do NOT invent disputes, allegations, or legal proceedings that are not
+explicitly stated in the provided context. If the document is a contract with no
+active dispute, describe it as a governing agreement — not a dispute. Do not assume
+non-compliance or breach unless the context explicitly states it. Report only what
+is present in the evidence, not what clauses say could happen hypothetically.
+
 Query / Research Topic: {query}
 
 Complete Case Context:
@@ -153,9 +159,16 @@ Produce a detailed research report with the following structure.
 Every factual claim MUST include a citation [Graph: ...] or [Document: Page N].
 Be exhaustive — include every relevant detail, number, date, and legal reference.
 
+IMPORTANT: Adapt the section content to the TYPE of document being analysed.
+- For litigation: focus on court orders, legal challenges, judicial history
+- For contracts: focus on obligations, rights, conditions, breach, remedies
+- For corporate documents: focus on structure, governance, shareholder rights
+- For banking/finance: focus on loan terms, security, default, enforcement
+- If a section is not applicable to this document type, state "Not applicable to this document type" briefly and move on.
+
 Respond in this exact JSON format:
 {{
-  "answer": "# Deep Research Report\\n\\n## 1. Executive Summary\\n[2-3 paragraph overview of the case, key parties, central legal dispute, and current status]\\n\\n## 2. Parties and Their Roles\\n[Every party identified — petitioner, respondent, courts, banks, intermediaries — with their legal role and relationship to the case]\\n\\n## 3. Chronological Timeline\\n[Every dated event in the case in chronological order — agreements, defaults, notices, court orders, auction, demands. Each entry: Date → Event → Citation]\\n\\n## 4. Legal Issues and Arguments\\n[Core legal questions: what is being challenged, on what grounds, which statutes and sections are relevant, what are the competing arguments]\\n\\n## 5. Court Orders and Judicial History\\n[Every court proceeding — which court, what date, what was ordered or decided, what was set aside or upheld]\\n\\n## 6. Financial Details\\n[Every financial figure — loan amounts, auction price, demand amounts, payments made, amounts outstanding — with exact figures and source pages]\\n\\n## 7. Key Relationships and Entities\\n[The most important typed relationships from the knowledge graph that define the structure of this case]\\n\\n## 8. Evidence Assessment\\n[Quality of available evidence, what is strongly supported vs inferred, gaps in the record]\\n\\n## 9. Conclusion\\n[Summary of legal standing, what the evidence supports, what remains contested]",
+  "answer": "# Deep Research Report\\n\\n## 1. Executive Summary\\n[2-3 paragraph overview of the document — its TYPE (contract/petition/agreement), its PURPOSE, key parties, and ACTUAL current status based only on what is explicitly stated. Do NOT infer disputes or allegations. If this is a contract with no active dispute, describe it as a governing agreement.]\\n\\n## 2. Parties and Their Roles\\n[Every party identified — with their legal role and relationship to the document. For contracts: buyer/seller/licensor/licensee. For litigation: petitioner/respondent/court. For corporate: directors/shareholders/company.] \\n\\n## 3. Key Facts and Timeline\\n[Every significant event, obligation trigger, or dated entry in chronological order. For contracts: execution date, milestones, notice periods. For litigation: filings, orders, hearings. Each entry: Date/Event → Detail → Citation]\\n\\n## 4. Central Issues and Subject Matter\\n[The core subject matter — what is being agreed, governed, challenged, or resolved. For contracts: key obligations, conditions, dispute clauses. For litigation: legal questions, grounds of challenge, relevant statutes.]\\n\\n## 5. Obligations, Rights and Remedies\\n[What each party is required to do, entitled to receive, and what happens on breach or non-performance. For contracts: payment terms, delivery obligations, termination rights. For litigation: court directions, compliance obligations.]\\n\\n## 6. Financial and Commercial Terms\\n[Every financial figure — amounts, rates, penalties, payment schedules, consideration — with exact figures and source pages. If no financial terms exist, state so.]\\n\\n## 7. Key Relationships Between Entities\\n[The most important typed relationships from the knowledge graph that define the structure of this document]\\n\\n## 8. Risk Assessment and Open Issues\\n[What is clearly established vs ambiguous, gaps in the record, unresolved obligations, areas requiring clarification]\\n\\n## 9. Conclusion\\n[Summary of the document's legal effect, what obligations or rights are clearly established, what remains open or contested],
   "citations": [
     {{"text": "key fact", "source": "Graph|Document", "page": 0, "detail": "source detail"}}
   ],
