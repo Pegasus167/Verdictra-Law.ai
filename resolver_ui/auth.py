@@ -130,6 +130,10 @@ security = HTTPBearer()
 async def require_auth(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> UserInfo:
+    # Skip auth in development
+    if os.environ.get("ENVIRONMENT") == "development":
+        return UserInfo(username="dev", name="Developer", role="admin")
+    
     """
     FastAPI dependency — use with Depends(require_auth) on any endpoint.
     Returns UserInfo if valid, raises 401 if not.

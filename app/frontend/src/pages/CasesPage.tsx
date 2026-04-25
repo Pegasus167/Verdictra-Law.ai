@@ -94,11 +94,25 @@ export default function CasesPage() {
 
       {/* Header */}
       <header style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
-        className="h-14 flex items-center px-10">
+        className="h-14 flex items-center justify-between px-10">
         <div className="flex items-center gap-2">
           <Scale size={16} className="text-indigo-400" />
           <span className="font-bold text-indigo-300 tracking-wider text-sm">LAW.ai</span>
           <span style={{ color: 'var(--muted)' }} className="text-sm">/ Case Intelligence</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-xs" style={{ color: 'var(--muted)' }}>
+            {localStorage.getItem('user_name') || ''}
+          </span>
+          <button
+            onClick={() => {
+              localStorage.clear()
+              navigate('/login')
+            }}
+            className="text-xs px-3 py-1.5 rounded"
+            style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)' }}>
+            Sign out
+          </button>
         </div>
       </header>
 

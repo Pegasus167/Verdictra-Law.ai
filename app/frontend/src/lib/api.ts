@@ -4,17 +4,26 @@ const BASE = '/api'
 
 // ── Auth helpers ───────────────────────────────────────────────────────────────
 
-function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
-  const token = localStorage.getItem('token')
-  return token
-    ? { ...extra, Authorization: `Bearer ${token}` }
-    : extra
-}
-
 function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = localStorage.getItem('token')
+  const headers: Record<string, string> = {}
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  // Merge with any existing headers, but don't override Austhorization
+  const existingHeaders = (options.headers as Record<string, string>) ?? {}
+  const {'Content-Type': _, 'Authorization': __, ...otherHeaders} = existingHeaders
+
   return fetch(url, {
     ...options,
-    headers: authHeaders((options.headers as Record<string, string>) ?? {}),
+    headers: {
+      ...otherHeaders,
+      ...headers,
+    },
   })
 }
 

@@ -196,9 +196,12 @@ export default function QueryPage() {
     setMessages(prev => [...prev, userMsg, assistantMsg])
 
     try {
+      const token = localStorage.getItem('token')
       const res = await fetch(`${BASE}/deep-research/${caseId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+         },
         body: JSON.stringify({ query: q }),
       })
 

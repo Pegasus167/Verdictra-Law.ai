@@ -15,6 +15,10 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/deep-research': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/pdf': {
         target: 'http://localhost:8000',
         changeOrigin: true,

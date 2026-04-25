@@ -6,15 +6,28 @@ import CompletePage from './pages/CompletePage'
 import QueryPage from './pages/QueryPage'
 import SummaryPage from './pages/SummaryPage'
 import LoginPage from './pages/LoginPage'
+import { useEffect } from 'react'
 
 // Auth guard — redirects to /login if no token in localStorage
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isDev = window.location.hostname === 'localhost'
+  if (isDev) return <>{children}</>
   const token = localStorage.getItem('token')
   if (!token) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
 export default function App() {
+  useEffect(() => {
+    const handleUnload = () => {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user_name')
+      localStorage.removeItem('user_role')
+    }
+    window.addEventListener('beforeunload', handleUnload)
+    return () => window.removeEventListener('beforeunload', handleUnload)
+  }, [])
+
   return (
     <Routes>
       {/* Public */}
