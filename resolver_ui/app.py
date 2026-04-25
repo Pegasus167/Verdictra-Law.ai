@@ -47,6 +47,12 @@ from config import settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+_ingestion_locks: dict[str, bool] = {}
+_ingestion_locks_mutex = threading.Lock()
+# Global semaphore — only one ingestion pipeline runs at a time
+# GLiNER model is not thread-safe under concurrent load on CPU
+_global_ingestion_semaphore = threading.Semaphore(1)
+
 app = FastAPI(title="LAW.ai")
 from resolver_ui.auth import require_auth, router as auth_router
 from fastapi import Depends
@@ -441,9 +447,26 @@ async def upload_case(
  
     with open(settings.case_conversation(case_id), "w", encoding="utf-8") as f:
         json.dump([], f)
- 
+    
+    # Prevent duplicate ingestion for same case_id
+    with _ingestion_locks_mutex:
+        if _ingestion_locks.get(case_id):
+            return JSONResponse(
+                {"error": f"Ingestion already running for '{case_id}'. Please wait."},
+                status_code=409,
+            )
+        _ingestion_locks[case_id] = True
+
+    def _run_and_unlock(pdf_path: str, case_id: str):
+        with _global_ingestion_semaphore:
+            try:
+                _run_ingestion_background(pdf_path, case_id)
+            finally:
+                with _ingestion_locks_mutex:
+                    _ingestion_locks[case_id] = False
+
     thread = threading.Thread(
-        target=_run_ingestion_background,
+        target=_run_and_unlock,
         args=(str(pdf_path), case_id),
         daemon=True,
         name=f"ingestion-{case_id}",
