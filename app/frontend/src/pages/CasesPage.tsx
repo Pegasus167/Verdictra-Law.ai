@@ -23,7 +23,7 @@ export default function CasesPage() {
   const [loading, setLoading]   = useState(true)
   const [uploading, setUploading] = useState(false)
   const [caseName, setCaseName] = useState('')
-  const [file, setFile]         = useState<File | null>(null)
+  const [files, setFiles]         = useState<File[]>([])
   const [domain, setDomain]     = useState('constitutional')
   const [error, setError]       = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -44,14 +44,14 @@ export default function CasesPage() {
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
-    if (!caseName.trim() || !file) return
+    if (!caseName.trim() || files.length === 0) return
     setUploading(true)
     setError('')
     try {
-      const { case_id } = await api.uploadCase(caseName.trim(), file, domain)
+      const { case_id } = await api.uploadCase(caseName.trim(), files, domain)
       navigate(`/processing/${case_id}`)
-    } catch {
-      setError('Upload failed. Please try again.')
+    } catch (err: any) {
+      setError(err.message || 'Upload failed. Please try again.')
       setUploading(false)
     }
   }
@@ -150,26 +150,52 @@ export default function CasesPage() {
               </div>
 
               <div className="flex flex-col gap-1.5 flex-1 min-w-48">
-                <label className="text-xs" style={{ color: 'var(--muted)' }}>PDF file</label>
+                <label className="text-xs" style={{ color: 'var(--muted)' }}>
+                  Files
+                  <span className="ml-1 font-normal" style={{ color: 'var(--muted)' }}>
+                    (PDF, DOCX, images — select multiple)
+                  </span>
+                </label>
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   className="rounded-lg px-3 py-2 text-sm text-left flex items-center gap-2"
                   style={{
                     background: 'var(--bg)',
-                    border: `1px solid ${file ? '#10b981' : 'var(--border2)'}`,
-                    color: file ? 'var(--text)' : 'var(--muted2)',
+                    border: `1px solid ${files.length > 0 ? '#10b981' : 'var(--border2)'}`,
+                    color: files.length > 0 ? 'var(--text)' : 'var(--muted2)',
                   }}
                 >
                   <Upload size={14} />
-                  {file ? file.name : 'Choose PDF...'}
+                  {files.length === 0
+                    ? 'Choose files...'
+                    : files.length === 1
+                      ? files[0].name
+                      : `${files.length} files selected`
+                  }
                 </button>
+                {files.length > 1 && (
+                  <div className="flex flex-col gap-1 mt-1">
+                    {files.map((f, i) => (
+                      <div key={i} className="flex items-center gap-2 px-2 py-1 rounded text-xs"
+                        style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted2)' }}>
+                        <span className="truncate flex-1">{f.name}</span>
+                        <span style={{ color: 'var(--muted)' }}>{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); setFiles(prev => prev.filter((_, idx) => idx !== i)) }}
+                          style={{ color: 'var(--muted)' }}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <input
                   ref={fileRef}
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.docx,.doc,.eml,.txt,.jpg,.jpeg,.png"
+                  multiple
                   className="hidden"
-                  onChange={e => setFile(e.target.files?.[0] ?? null)}
+                  onChange={e => setFiles(Array.from(e.target.files ?? []))}
                 />
               </div>
             </div>
@@ -208,10 +234,10 @@ export default function CasesPage() {
 
               <button
                 type="submit"
-                disabled={uploading || !caseName || !file}
+                disabled={uploading || !caseName.trim() || files.length === 0}
                 className="px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2"
                 style={{
-                  background: uploading || !caseName || !file ? 'var(--border2)' : 'var(--accent)',
+                  background: uploading || !caseName.trim() || files.length === 0 ? 'var(--border2)' : 'var(--accent)',
                   color: 'white',
                   height: 38,
                   alignSelf: 'flex-end',

@@ -49,6 +49,8 @@ def entity_to_dict(e: ExtractedEntity) -> dict:
         "source_pdf":     e.source_pdf,
         "source_page":    e.source_page,
         "context":        e.context,
+        "source_doc_id":  getattr(e, "source_doc_id", ""),
+        "source_filename": getattr(e, "source_filename", e.source_pdf),
     }
 
 
@@ -60,6 +62,8 @@ def relationship_to_dict(r: ExtractedRelationship) -> dict:
         "source_pdf":    r.source_pdf,
         "source_page":   r.source_page,
         "confidence":    r.confidence,
+        "source_doc_id":  getattr(r, "source_doc_id", ""),
+        "source_filename": getattr(r, "source_filename", r.source_pdf),
     }
 
 
@@ -187,7 +191,7 @@ def _load_domain_labels(case_id: str) -> list[str] | None:
         return None
 
 
-def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True):
+def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True, doc_id: str = "", doc_filename: str = "",):
     path = Path(path)
     settings.ensure_dirs()
 
@@ -269,6 +273,16 @@ def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True):
                         sections=[],
                     )
                     batch_result = extractor.extract_from_tree(batch_tree)
+
+                    # ── Stamp doc_id and filename on every entity/relationship ──
+                    _doc_id       = doc_id or f"doc_001"
+                    _doc_filename = doc_filename or pdf_path.name
+                    for e in batch_result.entities:
+                        e.source_doc_id   = _doc_id
+                        e.source_filename = _doc_filename
+                    for r in batch_result.relationships:
+                        r.source_doc_id   = _doc_id
+                        r.source_filename = _doc_filename
                     
                     # ── Validate entities before writing to Neo4j ──────────────
                     valid_entities, rejected = validator.validate_batch(

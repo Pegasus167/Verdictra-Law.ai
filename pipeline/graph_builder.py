@@ -226,6 +226,8 @@ class GraphBuilder:
             n.sourcePage    = $sourcePage,
             n.context       = $context,
             n.case_id       = $case_id,
+            n.sourceDocId   = $sourceDocId,
+            n.sourceFilename = $sourceFilename,
             n.createdAt     = timestamp()
         ON MATCH SET
             n.confidence    = CASE
@@ -246,6 +248,8 @@ class GraphBuilder:
             "sourcePage":    entity.source_page,
             "context":       entity.context,
             "case_id":       case_id,
+            "sourceDocId":   getattr(entity, "source_doc_id", ""),
+            "sourceFilename": getattr(entity, "source_filename", entity.source_pdf),
         })
 
     # ── Relationship Upsert ────────────────────────────────────────────────────
@@ -268,6 +272,8 @@ class GraphBuilder:
             r.sourcePDF   = $sourcePDF,
             r.sourcePage  = $sourcePage,
             r.case_id     = $case_id,
+            r.sourceDocId   = $sourceDocId,
+            r.sourceFilename = $sourceFilename,
             r.createdAt   = timestamp()
         ON MATCH SET
             r.confidence  = CASE
@@ -284,6 +290,8 @@ class GraphBuilder:
             "sourcePDF":   rel.source_pdf,
             "sourcePage":  rel.source_page,
             "case_id":     case_id,
+            "sourceDocId": getattr(rel, "source_doc_id", ""),
+            "sourceFilename": getattr(rel, "source_filename", rel.source_pdf),
         })
 
     # ── Safety Helpers ─────────────────────────────────────────────────────────

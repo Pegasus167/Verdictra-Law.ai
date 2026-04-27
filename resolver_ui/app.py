@@ -33,6 +33,7 @@ import uuid
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, Request, Form, UploadFile, File
+from typing import List
 from fastapi.responses import (
     HTMLResponse, RedirectResponse, JSONResponse,
     FileResponse, StreamingResponse,
@@ -412,43 +413,63 @@ async def query_page(request: Request, case_id: str):
 
 @app.post("/upload")
 async def upload_case(
-    case_name: str = Form(...),
-    pdf_file:  UploadFile = File(...),
-    domain:    str = Form(default="constitutional"),
+    case_name:  str = Form(...),
+    pdf_files:  List[UploadFile] = File(...),
+    domain:     str = Form(default="constitutional"),
     user=Depends(require_auth),
 ):
-    # Sanitize case_id from name
+    from pipeline.document_registry import DocumentRegistry
+
+    # Sanitize case_id
     case_id = re.sub(r"[^a-z0-9_]", "_", case_name.lower().strip())
     case_id = re.sub(r"_+", "_", case_id).strip("_")
- 
+
     settings.ensure_case_dirs(case_id)
- 
-    pdf_filename = f"{case_id}.pdf"
-    pdf_path     = settings.case_path(case_id) / pdf_filename
- 
-    content = await pdf_file.read()
-    with open(pdf_path, "wb") as f:
-        f.write(content)
- 
+
+    # Initialise document registry
+    registry = DocumentRegistry(settings.case_path(case_id))
+
+    # Save all uploaded files and register each one
+    saved_files = []
+    for upload in pdf_files:
+        content  = await upload.read()
+        filename = upload.filename or f"{case_id}.pdf"
+        # Save to documents/ subfolder
+        file_path = registry.document_path(filename)
+        with open(file_path, "wb") as f:
+            f.write(content)
+        # Register and get doc_id
+        doc_id = registry.add_document(
+            filename=filename,
+            file_size_bytes=len(content),
+            uploaded_by=user.username,
+        )
+        saved_files.append({"doc_id": doc_id, "filename": filename, "path": str(file_path)})
+        logger.info(f"Saved {filename} as {doc_id} for case {case_id}")
+
+    # For backward compatibility: set pdf_filename to first file
+    first_filename = saved_files[0]["filename"] if saved_files else f"{case_id}.pdf"
+
     metadata = {
         "case_id":      case_id,
         "case_name":    case_name,
-        "pdf_filename": pdf_filename,
-        "domain":       domain,          # ← saved in metadata
+        "pdf_filename": first_filename,
+        "domain":       domain,
         "status":       "processing",
         "created_at":   datetime.now().isoformat(),
         "pages":        None,
         "kge_status":   "not_started",
         "has_tree":     False,
         "created_by":   user.username,
+        "doc_count":    len(saved_files),
     }
     with open(settings.case_metadata(case_id), "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
- 
+
     with open(settings.case_conversation(case_id), "w", encoding="utf-8") as f:
         json.dump([], f)
-    
-    # Prevent duplicate ingestion for same case_id
+
+    # Prevent duplicate ingestion
     with _ingestion_locks_mutex:
         if _ingestion_locks.get(case_id):
             return JSONResponse(
@@ -457,24 +478,117 @@ async def upload_case(
             )
         _ingestion_locks[case_id] = True
 
-    def _run_and_unlock(pdf_path: str, case_id: str):
+    def _run_and_unlock(saved_files: list, case_id: str):
         with _global_ingestion_semaphore:
             try:
-                _run_ingestion_background(pdf_path, case_id)
+                _run_ingestion_background_multi(saved_files, case_id)
             finally:
                 with _ingestion_locks_mutex:
                     _ingestion_locks[case_id] = False
 
     thread = threading.Thread(
         target=_run_and_unlock,
-        args=(str(pdf_path), case_id),
+        args=(saved_files, case_id),
         daemon=True,
         name=f"ingestion-{case_id}",
     )
     thread.start()
-    logger.info(f"Background ingestion started for {case_id} (domain: {domain})")
- 
-    return JSONResponse({"case_id": case_id, "status": "processing"})
+    logger.info(f"Background ingestion started for {case_id} ({len(saved_files)} files, domain: {domain})")
+
+    return JSONResponse({
+        "case_id":   case_id,
+        "status":    "processing",
+        "doc_count": len(saved_files),
+        "documents": [{"doc_id": f["doc_id"], "filename": f["filename"]} for f in saved_files],
+    })
+
+# 3. Add new _run_ingestion_background_multi function.
+#    Place it RIGHT AFTER the existing _run_ingestion_background function.
+#    Add this complete function:
+
+def _run_ingestion_background_multi(saved_files: list, case_id: str):
+    """
+    Multi-file ingestion. Processes each file sequentially.
+    Runs entity resolver ONCE after all files are processed.
+    """
+    from pipeline.document_registry import DocumentRegistry
+
+    logger.info(f"[Ingestion] Starting multi-file ingestion for {case_id} ({len(saved_files)} files)...")
+
+    registry = DocumentRegistry(settings.case_path(case_id))
+
+    try:
+        from ingestion import run_pipeline
+
+        for file_info in saved_files:
+            doc_id   = file_info["doc_id"]
+            filename = file_info["filename"]
+            path     = file_info["path"]
+
+            logger.info(f"[Ingestion] Processing {filename} ({doc_id})...")
+            registry.update_status(doc_id, "processing")
+
+            try:
+                run_pipeline(
+                    path,
+                    case_id=case_id,
+                    doc_id=doc_id,
+                    doc_filename=filename,
+                )
+                registry.update_status(doc_id, "processed")
+                logger.info(f"[Ingestion] {filename} complete")
+            except Exception as e:
+                logger.error(f"[Ingestion] {filename} failed: {e}")
+                registry.update_status(doc_id, "failed")
+                # Update case metadata with error
+                try:
+                    meta = load_metadata(case_id)
+                    meta["status"] = "failed"
+                    meta["error"]  = f"{filename}: {str(e)}"
+                    with open(settings.case_metadata(case_id), "w", encoding="utf-8") as f:
+                        json.dump(meta, f, indent=2)
+                except Exception:
+                    pass
+                return  # Stop processing remaining files on failure
+
+        # All files processed — run entity resolver once
+        logger.info(f"[Resolver] Running entity resolver for {case_id}...")
+        try:
+            from pipeline.entity_resolver import EntityResolver
+            resolver = EntityResolver()
+            resolver.resolve(
+                str(settings.case_extraction(case_id)),
+                str(settings.case_resolution_state(case_id)),
+            )
+            logger.info(f"[Resolver] Complete for {case_id}")
+
+            meta = load_metadata(case_id)
+            meta["status"] = "review"
+            with open(settings.case_metadata(case_id), "w", encoding="utf-8") as f:
+                json.dump(meta, f, indent=2)
+            logger.info(f"[Ingestion] Status set to 'review' for {case_id}")
+
+        except Exception as e:
+            logger.error(f"[Resolver] Failed for {case_id}: {e}")
+            try:
+                meta = load_metadata(case_id)
+                meta["status"] = "review"
+                with open(settings.case_metadata(case_id), "w", encoding="utf-8") as f:
+                    json.dump(meta, f, indent=2)
+            except Exception:
+                pass
+
+    except Exception as e:
+        logger.error(f"[Ingestion] Multi-file ingestion failed for {case_id}: {e}")
+        import traceback; traceback.print_exc()
+        try:
+            meta = load_metadata(case_id)
+            meta["status"] = "failed"
+            meta["error"]  = str(e)
+            with open(settings.case_metadata(case_id), "w", encoding="utf-8") as f:
+                json.dump(meta, f, indent=2)
+        except Exception:
+            pass
 # ── Stage decision ─────────────────────────────────────────────────────────────
 
 @app.post("/stage/{case_id}")

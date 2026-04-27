@@ -44,15 +44,21 @@ export const api = {
 
   async uploadCase(
     caseName: string,
-    file: File,
+    files: File[],                    // ← was: file: File
     domain: string = 'constitutional',
-  ): Promise<{ case_id: string }> {
+  ): Promise<{ case_id: string; doc_count: number; documents: Array<{doc_id: string; filename: string}> }> {
     const form = new FormData()
     form.append('case_name', caseName)
-    form.append('pdf_file', file)
     form.append('domain', domain)
+    // Append each file under the same field name 'pdf_files'
+    for (const file of files) {
+      form.append('pdf_files', file)
+    }
     const res = await authFetch(`${BASE}/upload`, { method: 'POST', body: form })
-    if (!res.ok) throw new Error('Upload failed')
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || 'Upload failed')
+    }
     return res.json()
   },
 

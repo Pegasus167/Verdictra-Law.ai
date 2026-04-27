@@ -123,7 +123,9 @@ class ExtractedEntity:
     confidence: float
     source_pdf: str
     source_page: int
-    context: str
+    context: str = ""
+    source_doc_id: str = ""
+    source_filename: str = ""
 
 
 @dataclass
@@ -134,6 +136,8 @@ class ExtractedRelationship:
     source_pdf: str
     source_page: int
     confidence: float
+    source_doc_id: str = ""
+    source_filename: str = ""
 
 
 @dataclass
