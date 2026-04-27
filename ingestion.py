@@ -22,7 +22,6 @@ from datetime import datetime
 from pathlib import Path
 
 from config import settings
-from pipeline.pdf_to_markdown import pdf_to_markdown
 from pipeline.tree_builder import build_tree_from_markdown, save_tree, TreeNode
 from pipeline.pdf_extractor import DocumentTree, PageChunk
 from pipeline.entity_extractor import EntityExtractor, ExtractedEntity, ExtractedRelationship
@@ -235,11 +234,25 @@ def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True, do
                         model_name=settings.gliner_model,
                         threshold=0.5,
                     )
+                    
+                # Stage 1: File → Markdown (any supported format)
+                logger.info(f"Stage 1: Extracting {pdf_path.name}...")
+                from pipeline.extractors import extract_file, is_supported
 
-                # Stage 1: PDF → Markdown
-                logger.info("Stage 1: PDF → Markdown...")
-                md_output = settings.case_path(_case_id) / f"{_case_id}.md"
-                md_text   = pdf_to_markdown(pdf_path, md_output, use_ocr=use_ocr)
+                if not is_supported(pdf_path):
+                    raise ValueError(
+                        f"Unsupported file type: {pdf_path.suffix}. "
+                        f"Upload PDF, DOCX, EML, TXT, or image files."
+                    )
+
+                extraction_output = extract_file(pdf_path, use_ocr=use_ocr)
+                md_text = extraction_output.markdown_text
+
+                # Save markdown for debugging/reference
+                md_output = settings.case_path(_case_id) / f"{doc_filename or pdf_path.stem}.md"
+                with open(md_output, "w", encoding="utf-8") as f:
+                    f.write(md_text)
+
                 update_stage(2)
 
                 # Stage 2: Markdown → Tree
