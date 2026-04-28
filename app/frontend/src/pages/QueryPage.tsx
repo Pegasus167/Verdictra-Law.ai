@@ -60,6 +60,9 @@ export default function QueryPage() {
   const [input, setInput]         = useState('')
   const [streaming, setStreaming] = useState(false)
   const [deepResearching, setDeepResearching] = useState(false)
+  const [uploadingDoc, setUploadingDoc]   = useState(false)
+  const [docUploadMsg, setDocUploadMsg]   = useState('')
+  const docUploadRef                      = useRef<HTMLInputElement>(null)
   const [pdfOpen, setPdfOpen]     = useState(false)
   const [pdfPage, setPdfPage]     = useState(1)
   const [pdfFile, setPdfFile]     = useState('')
@@ -286,6 +289,31 @@ export default function QueryPage() {
       setAnnotations(prev => prev.filter(a => a.id !== id))
     } catch {}
   }
+  async function handleDocUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const selectedFiles = Array.from(e.target.files ?? [])
+    if (!selectedFiles.length || !caseId) return
+    setUploadingDoc(true)
+    setDocUploadMsg(`Uploading ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}...`)
+    try {
+      const form = new FormData()
+      for (const f of selectedFiles) form.append('files', f)
+      const token = localStorage.getItem('token')
+      const res = await fetch(`/api/cases/${caseId}/documents`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      })
+      if (!res.ok) throw new Error('Upload failed')
+      setDocUploadMsg(`✓ ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} added — processing...`)
+      setTimeout(() => setDocUploadMsg(''), 4000)
+    } catch (err: any) {
+      setDocUploadMsg(`✗ ${err.message || 'Upload failed'}`)
+      setTimeout(() => setDocUploadMsg(''), 4000)
+    } finally {
+      setUploadingDoc(false)
+      if (docUploadRef.current) docUploadRef.current.value = ''
+    }
+  }
 
   function navigateToNote(ann: Annotation) {
     setPdfPage(ann.page); setPdfFile(ann.pdf); setPdfOpen(true); setIndexOpen(false)
@@ -460,6 +488,30 @@ export default function QueryPage() {
             style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
             <div className="flex items-end gap-2.5 rounded-xl px-4 py-2.5"
               style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
+              {/* Add document button */}
+              <div className="relative flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => docUploadRef.current?.click()}
+                  disabled={isDisabled || uploadingDoc}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                  style={{
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border2)',
+                    color: uploadingDoc ? 'var(--muted)' : 'var(--muted2)',
+                  }}
+                  title="Add document to this case">
+                  {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>}
+                </button>
+                <input
+                  ref={docUploadRef}
+                  type="file"
+                  accept=".pdf,.docx,.doc,.eml,.txt,.jpg,.jpeg,.png"
+                  multiple
+                  className="hidden"
+                  onChange={handleDocUpload}
+                />
+              </div>
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -497,6 +549,11 @@ export default function QueryPage() {
                 <Send size={13} />
               </button>
             </div>
+            {docUploadMsg && (
+              <p className="text-xs mt-1 px-1" style={{ color: docUploadMsg.startsWith('✓') ? '#10b981' : docUploadMsg.startsWith('✗') ? '#ef4444' : 'var(--muted2)' }}>
+                {docUploadMsg}
+              </p>
+            )}
             <p className="text-xs mt-1.5 px-1" style={{ color: 'var(--muted)' }}>
               Enter to send · Shift+Enter for new line · Deep Research for full case analysis
             </p>

@@ -111,6 +111,7 @@ class EntityResolver:
         self,
         extraction_json_path: str | Path,
         output_path: str | Path,
+        case_path: str | Path = None,
     ) -> list[ResolutionGroup]:
         """
         Full resolution pipeline in one call.
@@ -119,12 +120,41 @@ class EntityResolver:
         Args:
             extraction_json_path: Path to cases/{case_id}/extraction.json
             output_path:          Path to cases/{case_id}/resolution_state.json
-
+            case_path:            Path to cases/{case_id}
+        
         Returns:
             List of ResolutionGroup objects (also saved to output_path)
         """
         logger.info(f"[Resolver] Loading entities from {extraction_json_path}...")
         entities = self.load_entities(extraction_json_path)
+        if case_path:
+            try:
+                from pipeline.entity_management import EntityRegistry
+                registry = EntityRegistry(Path(case_path))
+                if registry.get_confirmed_count() > 0:
+                    logger.info(
+                        f"[Resolver] Registry has {registry.get_confirmed_count()} " 
+                        f"confirmed entities - filtering new entities...."
+                    )
+                    entity_dicts = [
+                        {
+                            "canonical_name": e.canonical_name,
+                            "schema_type": e.schema_type,
+                            "source_pdf": e.source_pdf,
+                            "source_page": e.source_page,
+                        }
+                        for e in entities
+                    ]
+                    auto_merge, new_entities = registry.classify_new_entities(entity_dicts)
+                    confirmed_names = {e["canonical_name"] for e in auto_merge}
+                    # Keep only entities not already confirmed in the registry
+                    entities = [e for e in entities if e.canonical_name not in confirmed_names]
+                    logger.info(
+                        f"[Resolver] {len(auto_merge)} auto-merged from registry, "
+                        f"{len(entities)} new entities going to review"
+                    )
+            except Exception as e:
+                logger.warning(f"[Resolver] Registry filter failed: {e} - proceeding with full resolution")
 
         logger.info(f"[Resolver] Finding candidate groups...")
         groups = self.find_candidate_groups(entities)

@@ -173,6 +173,7 @@ def _run_ingestion_background(pdf_path: str, case_id: str):
             resolver.resolve(
                 str(settings.case_extraction(case_id)),
                 str(settings.case_resolution_state(case_id)),
+                case_path=str(settings.case_path(case_id)),
             )
             logger.info(f"[Resolver] Complete for {case_id}")
 
@@ -559,6 +560,7 @@ def _run_ingestion_background_multi(saved_files: list, case_id: str):
             resolver.resolve(
                 str(settings.case_extraction(case_id)),
                 str(settings.case_resolution_state(case_id)),
+                case_path=str(settings.case_path(case_id)),
             )
             logger.info(f"[Resolver] Complete for {case_id}")
 
@@ -589,6 +591,74 @@ def _run_ingestion_background_multi(saved_files: list, case_id: str):
                 json.dump(meta, f, indent=2)
         except Exception:
             pass
+
+# ── After Query page to add more files ─────────────────────────────────────────────────────────────
+
+@app.post("/cases/{case_id}/documents")
+async def add_documents(
+    case_id: str,
+    files: List[UploadFile] = File(...),
+    user=Depends(require_auth),
+):
+    """Add new documents to an existing case and trigger incremental ingestion."""
+    from pipeline.document_registry import DocumentRegistry
+
+    # Check case exists and user has access
+    try:
+        meta = load_metadata(case_id)
+        if user.role != "admin" and meta.get("created_by") != user.username:
+            return JSONResponse({"error": "Not authorized"}, status_code=403)
+    except Exception:
+        return JSONResponse({"error": "Case not found"}, status_code=404)
+
+    registry = DocumentRegistry(settings.case_path(case_id))
+
+    saved_files = []
+    for upload in files:
+        content  = await upload.read()
+        filename = upload.filename or f"document_{len(registry.get_all_documents())+1}"
+        file_path = registry.document_path(filename)
+        with open(file_path, "wb") as f:
+            f.write(content)
+        doc_id = registry.add_document(
+            filename=filename,
+            file_size_bytes=len(content),
+            uploaded_by=user.username,
+        )
+        saved_files.append({"doc_id": doc_id, "filename": filename, "path": str(file_path)})
+        logger.info(f"Added {filename} as {doc_id} to existing case {case_id}")
+
+    # Prevent concurrent ingestion
+    with _ingestion_locks_mutex:
+        if _ingestion_locks.get(case_id):
+            return JSONResponse(
+                {"error": "Ingestion already running for this case. Please wait."},
+                status_code=409,
+            )
+        _ingestion_locks[case_id] = True
+
+    def _run_and_unlock(saved_files: list, case_id: str):
+        with _global_ingestion_semaphore:
+            try:
+                _run_ingestion_background_multi(saved_files, case_id)
+            finally:
+                with _ingestion_locks_mutex:
+                    _ingestion_locks[case_id] = False
+
+    thread = threading.Thread(
+        target=_run_and_unlock,
+        args=(saved_files, case_id),
+        daemon=True,
+        name=f"ingestion-add-{case_id}",
+    )
+    thread.start()
+
+    return JSONResponse({
+        "case_id":   case_id,
+        "status":    "processing",
+        "doc_count": len(saved_files),
+        "documents": [{"doc_id": f["doc_id"], "filename": f["filename"]} for f in saved_files],
+    })
 # ── Stage decision ─────────────────────────────────────────────────────────────
 
 @app.post("/stage/{case_id}")
@@ -644,7 +714,18 @@ async def confirm_all(case_id: str):
             )
 
     save_state(case_id, state)
-
+    # Build confirmed entity registry from decisions
+    try:
+        from pipeline.entity_management import EntityRegistry
+        entity_reg= EntityRegistry(settings.case_path(case_id))
+        entity_reg.build_from_resolution_state(
+            resolution_state_path=settings.case_resolution_state(case_id),
+            confirmed_by="human",
+        )
+        logger.info(f"[Registry] Entity registry built for {case_id} - {entity_reg.get_confirmed_count()} confirmed entities")
+    except Exception as e:
+        logger.warning(f"[Registry] Build failed for {case_id}: {e}")
+        
     # Apply decisions to Neo4j
     try:
         from pipeline.entity_resolver import EntityResolver
