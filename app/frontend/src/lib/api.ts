@@ -115,7 +115,10 @@ export const api = {
 
   async deleteCase(caseId: string): Promise<void> {
     const res = await authFetch(`${BASE}/cases/${caseId}`, { method: 'DELETE' })
-    if (!res.ok) throw new Error('Delete failed')
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || 'Delete failed')
+    }
   },
 }
 

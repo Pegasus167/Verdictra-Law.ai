@@ -67,8 +67,7 @@ export default function CasesPage() {
     if (!window.confirm('Delete this case? This cannot be undone.')) return
     setDeletingId(caseId)
     try {
-      const res = await fetch(`/api/cases/${caseId}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Delete failed')
+      const res = await api.deleteCase(caseId)
       setCases(prev => prev.filter(c => c.case_id !== caseId))
     } catch {
       setError('Failed to delete case. Please try again.')
