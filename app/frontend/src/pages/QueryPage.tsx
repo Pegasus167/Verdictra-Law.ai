@@ -67,6 +67,9 @@ export default function QueryPage() {
   const [pdfPage, setPdfPage]     = useState(1)
   const [pdfFile, setPdfFile]     = useState('')
   const [activeCite, setActiveCite] = useState<string | null>(null)
+  const [pdfPanelWidth, setPdfPanelWidth] = useState(384) // 384px = w-96
+  const pdfPanelRef = useRef<HTMLDivElement>(null)
+  const isResizingPdf = useRef(false)
 
   // Post-it state
   const [annotations, setAnnotations]     = useState<Annotation[]>([])
@@ -126,6 +129,26 @@ export default function QueryPage() {
     if (!el) return
     el.style.height = 'auto'
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+  }
+
+  function startPdfResize(e: React.MouseEvent) {
+    isResizingPdf.current = true
+    const startX = e.clientX
+    const startWidth = pdfPanelWidth
+
+    function onMove(e: MouseEvent) {
+        if (!isResizingPdf.current) return
+        const delta = startX - e.clientX
+        const newWidth = Math.max(300, Math.min(800, startWidth + delta))
+        setPdfPanelWidth(newWidth)
+    }
+    function onUp() {
+        isResizingPdf.current = false
+        window.removeEventListener('mousemove', onMove)
+        window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
   }
 
   // ── Normal query ──────────────────────────────────────────────────────────
@@ -562,8 +585,18 @@ export default function QueryPage() {
 
         {/* PDF panel */}
         {pdfOpen && (
-          <div className="w-96 flex-shrink-0 flex flex-col overflow-hidden"
-            style={{ background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
+          <div
+            ref={pdfPanelRef}
+            className="flex-shrink-0 flex flex-col overflow-hidden relative"
+            style={{ width: pdfPanelWidth, background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
+            {/* Drag handle */}
+            <div
+              onMouseDown={startPdfResize}
+              className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize z-10"
+              style={{ background: 'transparent' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            />
 
             {/* PDF toolbar */}
             <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
@@ -666,8 +699,8 @@ export default function QueryPage() {
                       if (e.key === 'Escape') { setNoteOpen(false); setNoteText('') }
                     }}
                     placeholder="Type your note... (Enter to save, Esc to cancel)"
-                    rows={3} className="w-full rounded-md px-2.5 py-1.5 text-xs outline-none resize-none"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--text)', fontFamily: 'monospace' }} />
+                    rows={3} className="w-full rounded-md px-2.5 py-1.5 text-xs outline-none resize-y"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--text)', fontFamily: 'monospace', minHeight: 60, maxHeight: 300 }} />
                   <div className="flex items-center gap-2">
                     <span className="text-xs" style={{ color: 'var(--muted)' }}>Color:</span>
                     {NOTE_COLORS.map(c => (

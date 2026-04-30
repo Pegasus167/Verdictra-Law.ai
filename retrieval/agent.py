@@ -121,10 +121,11 @@ Critical rules:
 7. For financial amounts: cite the exact figure and its source page.
 8. For court orders: cite the exact date, court name, and what was ordered.
 9. For legal relationships: cite the specific statute, section, or agreement.
+10. FORMAT: Match response length to query complexity. Simple question = short answer (2-3 sentences). Relationship list = bullet points, one per line. Complex analysis = short paragraphs. Never write continuous prose for list-type answers.
 
 Respond in this exact JSON format:
 {{
-  "answer": "Your detailed answer with inline citations. Be specific — numbers, names, dates.",
+  "answer": "Your structured answer. FORMAT RULES: For simple factual queries (who, what, when, how much) — answer in 2-3 concise sentences maximum with inline citations. For relationship queries — use a short bulleted list, one relationship per line. For complex queries — use short paragraphs with clear headings. NEVER write a wall of text. NEVER list all relationships as a numbered paragraph — use line breaks. Keep each point to one sentence. Example of good format for relationship query: '**Buyer → Supplier**: The buyer governs the supplier under the CTC [Graph]. **Supplier → Policy**: The supplier is bound by the responsible sourcing policy [Graph: Page 4].'",
   "citations": [
     {{"text": "key claim or quote", "source": "Graph|Document", "page": 0, "detail": "relationship or section"}}
   ],
