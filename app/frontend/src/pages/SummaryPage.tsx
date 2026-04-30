@@ -21,17 +21,31 @@ export default function SummaryPage() {
 
   useEffect(() => {
     if (!caseId) return
-    Promise.all([
-      api.getResolutionState(caseId),
-      api.getCase(caseId),
-    ])
-      .then(([s, c]) => {
+    let attempts = 0
+    const maxAttempts = 10
+
+    const tryLoad = async () => {
+      try {
+        const [s, c] = await Promise.all([
+          api.getResolutionState(caseId),
+          api.getCase(caseId),
+        ])
         setState(s)
         setCaseName(c.case_name)
         setPdfFile(c.pdf_filename)
-      })
-      .catch(() => setError('Failed to load resolution summary'))
-      .finally(() => setLoading(false))
+        setLoading(false)
+      } catch {
+        attempts++
+        if (attempts < maxAttempts) {
+          setTimeout(tryLoad, 2000) // retry every 2 seconds
+        } else {
+          setError('Failed to load resolution summary')
+          setLoading(false)
+        }
+      }
+    }
+
+    tryLoad()
   }, [caseId])
 
   function openPdf(page: number, key: string) {
