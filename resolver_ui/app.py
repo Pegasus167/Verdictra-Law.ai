@@ -282,7 +282,11 @@ async def staged_status(case_id: str):
 
 @app.get("/pdf/{case_id}/{filename}")
 async def serve_pdf(case_id: str, filename: str):
-    pdf_path = settings.case_path(case_id) / filename
+    # Try documents/ subfolder first (new multi-file upload path)
+    pdf_path = settings.case_path(case_id) / "documents" / filename
+    if not pdf_path.exists():
+        # Fall back to case root (old single-file upload path)
+        pdf_path = settings.case_path(case_id) / filename
     if not pdf_path.exists():
         return JSONResponse({"error": "PDF not found"}, status_code=404)
     return FileResponse(str(pdf_path), media_type="application/pdf")
