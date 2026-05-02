@@ -365,8 +365,8 @@ export default function QueryPage() {
             style={{ color: 'var(--muted)', border: '1px solid var(--border)' }}>
             <ArrowLeft size={12} /> Cases
           </button>
-          <Scale size={14} className="text-indigo-400" />
-          <span className="text-sm font-bold text-indigo-300">LAW.ai</span>
+          <Scale size={14} style={{ color: 'var(--accent2)' }} />
+          <span className="text-sm font-bold" style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra</span>
           <span className="text-xs" style={{ color: 'var(--muted)' }}>/ {caseName}</span>
         </div>
         <div className="flex items-center gap-2">

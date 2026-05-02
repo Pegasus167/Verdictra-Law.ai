@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@400;600;700&display=swap');
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -10,26 +12,30 @@
   }
 
   :root {
-    --bg: #080b12;
-    --surface: #0e1420;
-    --surface2: #131926;
-    --border: #1c2535;
-    --border2: #243044;
-    --accent: #6366f1;
-    --accent2: #818cf8;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --muted2: #94a3b8;
-    --green: #10b981;
-    --yellow: #f59e0b;
-    --red: #ef4444;
+    --bg:       #fcf9f5;
+    --surface:  #f6f3ef;
+    --surface2: #f0ede9;
+    --border:   #e5e2de;
+    --border2:  #dcdad6;
+    --accent:   #17191b;
+    --accent2:  #6b5c4c;
+    --text:     #1c1c1a;
+    --muted:    #75777a;
+    --muted2:   #44474a;
+    --green:    #3b6d11;
+    --yellow:   #ba7517;
+    --red:      #ba1a1a;
   }
 
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: 'Manrope', sans-serif;
     -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Noto Serif', serif;
   }
 
   ::-webkit-scrollbar { width: 4px; }
@@ -38,10 +44,10 @@
 }
 
 @layer utilities {
-  .text-muted { color: var(--muted); }
+  .text-muted  { color: var(--muted); }
   .text-muted2 { color: var(--muted2); }
-  .bg-surface { background: var(--surface); }
+  .bg-surface  { background: var(--surface); }
   .bg-surface2 { background: var(--surface2); }
-  .border-default { border-color: var(--border); }
+  .border-default  { border-color: var(--border); }
   .border-default2 { border-color: var(--border2); }
 }

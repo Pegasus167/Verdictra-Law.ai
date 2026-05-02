@@ -47,8 +47,8 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
 
         <div className="flex items-center justify-center gap-3 mb-10">
-          <Scale size={28} className="text-indigo-400" />
-          <span className="text-2xl font-bold text-indigo-300 tracking-wider">Verdictra</span>
+          <Scale size={28} style={{ color: 'var(--accent2)' }} />
+          <span className="text-2xl font-bold" style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra</span>
         </div>
 
         <div className="rounded-2xl p-8"

@@ -275,7 +275,7 @@ export default function ReviewPage() {
       <header className="flex items-center justify-between px-4 flex-shrink-0"
         style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', height: 52 }}>
         <div className="flex items-center gap-3">
-          <span className="font-bold text-indigo-300 text-sm tracking-wider">LAW.ai / RESOLVE</span>
+          <span className="font-bold text-sm tracking-wider" style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra / Resolve</span>
           <div className="flex items-center gap-2">
             <div className="w-40 h-0.5 rounded-full overflow-hidden" style={{ background: 'var(--border2)' }}>
               <div className="h-full rounded-full transition-all duration-300"

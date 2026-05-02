@@ -123,7 +123,7 @@ export default function ProcessingPage() {
       <div className="rounded-2xl p-12 text-center w-full max-w-lg"
         style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
 
-        <Loader2 size={48} className="animate-spin mx-auto mb-6 text-indigo-400" />
+        <Loader2 size={48} className="animate-spin mx-auto mb-6" style={{ color: 'var(--accent2)' }} />
         <h1 className="text-xl font-bold mb-2">Processing Case</h1>
         <p className="text-sm mb-8" style={{ color: 'var(--muted)' }}>
           The ingestion pipeline is running. This takes 5–15 minutes
@@ -153,7 +153,7 @@ export default function ProcessingPage() {
                 {done ? (
                   <CheckCircle size={14} className="text-emerald-400 flex-shrink-0" />
                 ) : active ? (
-                  <Loader2 size={14} className="animate-spin text-indigo-400 flex-shrink-0" />
+                  <Loader2 size={14} className="animate-spin" style={{ color: 'var(--accent2)' }} />
                 ) : (
                   <Circle size={14} className="flex-shrink-0" style={{ color: 'var(--muted)' }} />
                 )}

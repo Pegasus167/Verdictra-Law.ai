@@ -62,7 +62,7 @@ export default function SummaryPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
-        <Loader2 size={32} className="animate-spin text-indigo-400" />
+        <Loader2 size={32} className="animate-spin" style={{ color: 'var(--accent2)' }} />
       </div>
     )
   }
@@ -88,7 +88,7 @@ export default function SummaryPage() {
       <header className="h-14 flex items-center justify-between px-10 flex-shrink-0"
         style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
         <div>
-          <span className="font-bold text-indigo-300 tracking-wider text-sm">LAW.ai</span>
+          <span className="font-bold tracking-wider text-sm" style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra</span>
           <span className="text-sm ml-2" style={{ color: 'var(--muted)' }}>
             / {caseName} / Resolution Summary
           </span>
@@ -183,7 +183,7 @@ export default function SummaryPage() {
                         style={{ background: '#1e1b4b', color: '#818cf8', border: '1px solid #3730a3' }}>
                         {group.schema_type}
                       </span>
-                      <span className="text-xs font-bold text-indigo-300">
+                      <span className="text-xs font-bold" style={{ color: 'var(--accent2)' }}>
                         → {group.canonical_name}
                       </span>
                       <span className="text-xs" style={{ color: 'var(--muted)' }}>

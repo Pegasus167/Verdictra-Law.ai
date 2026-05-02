@@ -95,9 +95,9 @@ export default function CasesPage() {
       <header style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
         className="h-14 flex items-center justify-between px-10">
         <div className="flex items-center gap-2">
-          <Scale size={16} className="text-indigo-400" />
-          <span className="font-bold text-indigo-300 tracking-wider text-sm">LAW.ai</span>
-          <span style={{ color: 'var(--muted)' }} className="text-sm">/ Case Intelligence</span>
+          <Scale size={16} style={{ color: 'var(--accent2)' }} />
+          <span className="font-bold tracking-wider text-sm" style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra</span>
+          <span className="text-sm" style={{ color: 'var(--muted)' }}>Legal Intelligence</span>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs" style={{ color: 'var(--muted)' }}>
@@ -268,7 +268,7 @@ export default function CasesPage() {
 
         {loading ? (
           <div className="flex justify-center py-16">
-            <Loader2 size={24} className="animate-spin text-indigo-400" />
+            <Loader2 size={24} className="animate-spin" style={{ color: 'var(--accent2)' }} />
           </div>
         ) : cases.length === 0 ? (
           <div className="text-center py-16 flex flex-col items-center gap-3"
