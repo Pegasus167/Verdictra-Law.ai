@@ -345,10 +345,10 @@ export default function QueryPage() {
   const pdfAnnotations = annotations.filter(a => a.pdf === pdfFile)
 
   const typeColor: Record<string, string> = {
-    DIRECT: '#10b981', PARTIAL: '#f59e0b', INFERRED: '#818cf8', DEEP_RESEARCH: '#a78bfa',
+    DIRECT: '#3b6d11', PARTIAL: '#ba7517', INFERRED: '#44474a', DEEP_RESEARCH: '#6b5c4c',
   }
   const typeBg: Record<string, string> = {
-    DIRECT: '#05261a', PARTIAL: '#1c1003', INFERRED: '#0f1a3a', DEEP_RESEARCH: '#1a0a2e',
+    DIRECT: '#eaf3de', PARTIAL: '#faeeda', INFERRED: '#f0ede9', DEEP_RESEARCH: '#f4dfcb',
   }
 
   const isDisabled = streaming || deepResearching
@@ -372,19 +372,19 @@ export default function QueryPage() {
         <div className="flex items-center gap-2">
           {deepResearching && (
             <span className="flex items-center gap-1 text-xs px-2 py-1 rounded"
-              style={{ background: '#f4dfcb', border: '1px solid #6b5c4c', color: '#6b5c4c' }}>
+              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
               <Loader2 size={10} className="animate-spin" /> Deep Research running...
             </span>
           )}
           {kgeStatus === 'training' && (
             <span className="flex items-center gap-1 text-xs px-2 py-1 rounded"
-              style={{ background: '#1c1003', border: '1px solid #78350f', color: '#f59e0b' }}>
+              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
               <Cpu size={10} className="animate-pulse" /> KGE training...
             </span>
           )}
           {kgeStatus === 'ready' && (
             <span className="flex items-center gap-1 text-xs px-2 py-1 rounded"
-              style={{ background: '#05261a', border: '1px solid #065f46', color: '#10b981' }}>
+              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
               <Zap size={10} /> KGE enhanced
             </span>
           )}

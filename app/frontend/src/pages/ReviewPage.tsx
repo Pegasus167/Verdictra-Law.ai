@@ -5,7 +5,6 @@ import {
   Check, X, SkipForward, Trash2, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react'
 import { api } from '../lib/api'
-import PDFViewer from '../components/PDFViewer'
 import type { Group, SidebarItem, StagedDecision, ResolutionState } from '../types'
 
 const DOT_COLOR: Record<string, string> = {
@@ -341,7 +340,7 @@ export default function ReviewPage() {
                   paddingLeft: sidebarCollapsed ? 12 : 12,
                   paddingRight: sidebarCollapsed ? 12 : 8,
                   borderLeft: `2px solid ${item.idx === currentIdx ? 'var(--accent)' : 'transparent'}`,
-                  background: item.idx === currentIdx ? '#1a1f35' : 'transparent',
+                  background: item.idx === currentIdx ? 'var(--surface2)' : 'transparent',
                   opacity: deletedGroups.has(item.idx) ? 0.4 : 1,
                 }}
               >
@@ -370,18 +369,18 @@ export default function ReviewPage() {
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="px-2.5 py-1 rounded text-xs"
-                style={{ background: '#1e1b4b', color: '#a5b4fc', border: '1px solid #3730a3' }}>
+                style={{ background: 'var(--surface2)', color: 'var(--accent)', border: '1px solid var(--border)' }}>
                 {group.schema_type}
               </span>
               {group.llm_model_used && (
                 <span className="px-2.5 py-1 rounded text-xs"
-                  style={{ background: '#0f2a42', color: '#60a5fa', border: '1px solid #1e40af' }}>
+                  style={{ background: 'var(--surface2)', color: 'var(--accent)', border: '1px solid var(--border)' }}>
                   {group.llm_model_used}
                 </span>
               )}
               {group.is_complex && (
                 <span className="px-2.5 py-1 rounded text-xs"
-                  style={{ background: '#1a0a2e', color: '#c084fc', border: '1px solid #7e22ce' }}>
+                  style={{ background: 'var(--surface2)', color: 'var(--accent)', border: '1px solid var(--border)' }}>
                   complex
                 </span>
               )}
@@ -393,7 +392,7 @@ export default function ReviewPage() {
             <button
               onClick={deleteGroup}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
-              style={{ background: '#1f0a0a', border: '1px solid #7f1d1d', color: '#f87171' }}
+              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--muted)' }}
               title="Delete this entire group">
               <Trash2 size={11} /> Delete Group
             </button>
@@ -477,10 +476,10 @@ export default function ReviewPage() {
                   {vote && (
                     <div className="rounded-md p-2 text-xs mb-2"
                       style={{
-                        background: vote === 'YES' ? '#05261a' : vote === 'NO' ? '#1f0a0a' : '#1c1003',
-                        border: `1px solid ${vote === 'YES' ? '#065f46' : vote === 'NO' ? '#7f1d1d' : '#78350f'}`,
+                        background: vote === 'YES' ? '#eaf3de' : vote === 'NO' ? '#ffdad6' : '#faeeda',
+                        border: `1px solid ${vote === 'YES' ? '#3b6d11' : vote === 'NO' ? '#ba1a1a' : '#ba7517'}`,
                       }}>
-                      <span style={{ color: vote === 'YES' ? '#10b981' : vote === 'NO' ? '#ef4444' : '#f59e0b', fontWeight: 700 }}>
+                      <span style={{ color: vote === 'YES' ? '#3b6d11' : vote === 'NO' ? '#ba1a1a' : '#ba7517', fontWeight: 700 }}>
                         {vote === 'YES' ? '✓ MERGE' : vote === 'NO' ? '✗ KEEP' : '? UNSURE'}
                       </span>
                       {' — '}{c.llm_reason}
@@ -541,7 +540,7 @@ export default function ReviewPage() {
             </button>
             {staged[String(currentIdx)] && (
               <span className="ml-auto text-xs px-2.5 py-1 rounded"
-                style={{ background: '#05261a', border: '1px solid #065f46', color: '#10b981' }}>
+                style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
                 ✓ staged: {staged[String(currentIdx)].decision.toLowerCase()}
               </span>
             )}
@@ -568,13 +567,33 @@ export default function ReviewPage() {
 
         {/* PDF panel */}
         {pdfOpen && (
-          <PDFViewer
-            caseId={caseId!}
-            pdfFile={pdfFile}
-            page={pdfPage}
-            highlightText={activeCitation}
-            onClose={() => setPdfOpen(false)}
-          />
+          <div className="flex-shrink-0 flex flex-col overflow-hidden"
+            style={{ width: 420, background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
+              style={{ borderBottom: '1px solid var(--border)' }}>
+              <span className="text-xs" style={{ color: 'var(--accent2)' }}>
+                {pdfFile} · p.{pdfPage}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-2 py-1 rounded"
+                  style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
+                  Ctrl+F to search
+                </span>
+                <button onClick={() => setPdfOpen(false)}
+                  className="text-xs px-2 py-1 rounded"
+                  style={{ color: 'var(--muted)', border: '1px solid var(--border)' }}>
+                  ✕
+                </button>
+              </div>
+            </div>
+            <iframe
+              key={`${pdfFile}-${pdfPage}`}
+              src={`/pdf/${caseId}/${pdfFile}#page=${pdfPage}`}
+              className="flex-1 w-full"
+              style={{ border: 'none', background: '#fcf9f5' }}
+              title="PDF Viewer"
+            />
+          </div>
         )}
       </div>
     </div>
