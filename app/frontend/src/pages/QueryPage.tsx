@@ -365,14 +365,14 @@ export default function QueryPage() {
             style={{ color: 'var(--muted)', border: '1px solid var(--border)' }}>
             <ArrowLeft size={12} /> Cases
           </button>
-          <Scale size={14} style={{ color: 'var(--accent2)' }} />
+          <img src="/logo.png" alt="Verdictra" style={{ height: 24, width: 'auto' }} />
           <span className="text-sm font-bold" style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra</span>
           <span className="text-xs" style={{ color: 'var(--muted)' }}>/ {caseName}</span>
         </div>
         <div className="flex items-center gap-2">
           {deepResearching && (
             <span className="flex items-center gap-1 text-xs px-2 py-1 rounded"
-              style={{ background: '#1a0a2e', border: '1px solid #7e22ce', color: '#a78bfa' }}>
+              style={{ background: '#f4dfcb', border: '1px solid #6b5c4c', color: '#6b5c4c' }}>
               <Loader2 size={10} className="animate-spin" /> Deep Research running...
             </span>
           )}

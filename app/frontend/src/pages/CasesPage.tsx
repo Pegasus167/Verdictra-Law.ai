@@ -95,7 +95,7 @@ export default function CasesPage() {
       <header style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
         className="h-14 flex items-center justify-between px-10">
         <div className="flex items-center gap-2">
-          <Scale size={16} style={{ color: 'var(--accent2)' }} />
+          <img src="/logo.png" alt="Verdictra" style={{ height: 32, width: 'auto'}} />
           <span className="font-bold tracking-wider text-sm" style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra</span>
           <span className="text-sm" style={{ color: 'var(--muted)' }}>Legal Intelligence</span>
         </div>
