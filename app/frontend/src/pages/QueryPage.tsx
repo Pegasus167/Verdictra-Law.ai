@@ -435,8 +435,8 @@ export default function QueryPage() {
                   ) : (
                     <div className="px-5 py-4 rounded-xl max-w-4xl"
                       style={{
-                        background: msg.answer_type === 'DEEP_RESEARCH' ? '#0f0a1e' : 'var(--surface)',
-                        border: `1px solid ${msg.answer_type === 'DEEP_RESEARCH' ? '#4c1d95' : 'var(--border)'}`,
+                        background: msg.answer_type === 'DEEP_RESEARCH' ? '#f4dfcb' : 'var(--surface)',
+                        border: `1px solid ${msg.answer_type === 'DEEP_RESEARCH' ? '#6b5c4c' : 'var(--border)'}`,
                         lineHeight: 1.85,
                         borderRadius: '2px 12px 12px 12px',
                         color: 'var(--text)',
@@ -445,9 +445,9 @@ export default function QueryPage() {
                       {/* Deep research header */}
                       {msg.answer_type === 'DEEP_RESEARCH' && (
                         <div className="flex items-center gap-2 mb-4 pb-3"
-                          style={{ borderBottom: '1px solid #4c1d95' }}>
-                          <BookOpen size={14} style={{ color: '#a78bfa' }} />
-                          <span className="text-xs font-bold" style={{ color: '#a78bfa' }}>
+                          style={{ borderBottom: '1px solid #6b5c4c' }}>
+                          <BookOpen size={14} style={{ color: '#6b5c4c' }} />
+                          <span className="text-xs font-bold" style={{ color: '#6b5c4c' }}>
                             Deep Research Report
                           </span>
                         </div>
@@ -488,7 +488,7 @@ export default function QueryPage() {
                                 onClick={() => openCitation(c, key)}
                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition-colors"
                                 style={{
-                                  background: activeCite === key ? '#1a1f35' : 'var(--surface2)',
+                                  background: activeCite === key ? 'var(--surface2)' : 'var(--surface)',
                                   border: `1px solid ${activeCite === key ? 'var(--accent)' : 'var(--border2)'}`,
                                   color: activeCite === key ? 'var(--accent2)' : 'var(--muted2)',
                                 }}>
