@@ -50,6 +50,28 @@ function DeepResearchContent({ content }: { content: string }) {
   )
 }
 
+function SimpleMarkdown({ content }: { content: string }) {
+  const lines = content.split('\n')
+  return (
+    <div className="flex flex-col gap-1.5 text-xs" style={{ lineHeight: 1.7 }}>
+      {lines.map((line, i) => {
+        if (!line.trim()) return <div key={i} style={{ height: 6 }} />
+        // Bold text **...**
+        const parts = line.split(/\*\*(.*?)\*\*/g)
+        return (
+          <div key={i}>
+            {parts.map((part, j) =>
+              j % 2 === 1
+                ? <strong key={j} style={{ color: 'var(--text)', fontWeight: 600 }}>{part}</strong>
+                : <span key={j}>{part}</span>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function QueryPage() {
   const { caseId } = useParams<{ caseId: string }>()
   const navigate   = useNavigate()
@@ -456,7 +478,7 @@ export default function QueryPage() {
                       {/* Content — formatted for deep research, plain for normal */}
                       {msg.answer_type === 'DEEP_RESEARCH'
                         ? <DeepResearchContent content={msg.content} />
-                        : <div className="text-xs">{msg.content}</div>
+                        : <SimpleMarkdown content={msg.content} />
                       }
 
                       {msg.answer_type && (
@@ -471,7 +493,9 @@ export default function QueryPage() {
                           </span>
                           <span className="text-xs px-2 py-0.5 rounded"
                             style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)' }}>
-                            {Math.round((msg.confidence ?? 0) * 100)}% confidence
+                            {(msg.confidence ?? 0) >= 0.90 ? 'Highly confident' :
+                             (msg.confidence ?? 0) >= 0.80 ? 'Very confident' :
+                             (msg.confidence ?? 0) >= 0.60 ? 'Confident' : 'Low confidence'}
                           </span>
                           <span className="text-xs px-2 py-0.5 rounded"
                             style={{ background: 'var(--surface2)', color: 'var(--muted)', border: '1px solid var(--border2)' }}>
