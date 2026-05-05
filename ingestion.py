@@ -189,8 +189,32 @@ def _load_domain_labels(case_id: str) -> list[str] | None:
         logger.warning(f"Domain label load failed ({e}) — EntityExtractor uses defaults")
         return None
 
+def _extract_document_date(markdown_text: str) -> str:
+    """Extract the document's own date from its first 500 words."""
+    try:
+        from openai import OpenAI
+        from config import settings
+        client = OpenAI(api_key=settings.openai_api_key)
+        sample = " ".join(markdown_text.split()[:500])
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            max_tokens=30,
+            messages=[{
+                "role": "user",
+                "content": (
+                    f"Extract the date of this legal document. "
+                    f"Return ONLY the date in format 'DD Month YYYY' "
+                    f"(e.g. '5 September 2024'). "
+                    f"If no clear date found return 'Date unknown'.\n\n"
+                    f"Document: {sample}"
+                )
+            }]
+        )
+        return response.choices[0].message.content.strip()
+    except Exception:
+        return ""
 
-def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True, doc_id: str = "", doc_filename: str = "",):
+def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True, doc_id: str = "", doc_filename: str = "", doc_date: str = "", doc_upload_order: int = 0):
     path = Path(path)
     settings.ensure_dirs()
 
@@ -290,12 +314,16 @@ def run_pipeline(path: str | Path, case_id: str = None, use_ocr: bool = True, do
                     # ── Stamp doc_id and filename on every entity/relationship ──
                     _doc_id       = doc_id or f"doc_001"
                     _doc_filename = doc_filename or pdf_path.name
+                    _doc_date     = doc_date or ""
+                    _doc_upload_order    = doc_upload_order or 0
                     for e in batch_result.entities:
                         e.source_doc_id   = _doc_id
                         e.source_filename = _doc_filename
                     for r in batch_result.relationships:
                         r.source_doc_id   = _doc_id
                         r.source_filename = _doc_filename
+                        r.document_date   = _doc_date
+                        r.doc_upload_order = _doc_upload_order
                     
                     # ── Validate entities before writing to Neo4j ──────────────
                     valid_entities, rejected = validator.validate_batch(

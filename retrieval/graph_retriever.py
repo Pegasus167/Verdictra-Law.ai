@@ -62,21 +62,32 @@ MIN_CONFIDENT_NODES  = 2
 CONFIDENCE_THRESHOLD = 0.6
 MIN_TRIPLES          = 1
 
+# ── Query-type-aware retrieval depth ──────────────────────────────────────────
+TOP_K_BY_QUERY_TYPE = {
+    "FACT":          {"nodes": 5,  "passages": 3},
+    "RELATIONSHIP":  {"nodes": 12, "passages": 6},
+    "COMPLEX":       {"nodes": 20, "passages": 10},
+    "DEEP_RESEARCH": {"nodes": 50, "passages": 20},
+}
+DEFAULT_TOP_K = {"nodes": 10, "passages": 5}
 
 # ── Data Structures ────────────────────────────────────────────────────────────
 
 @dataclass
 class GraphNode:
-    canonical_name: str
-    text: str
-    schema_type: str
-    source_pdf: str
-    source_page: int
-    confidence: float
-    degree: int = 0
+    canonical_name:   str
+    text:             str
+    schema_type:      str
+    source_pdf:       str
+    source_page:      int
+    confidence:       float
+    degree:           int   = 0
     embedding_similarity: float = 0.0
-    node_score: float = 0.0
-    relationships: list[dict] = field(default_factory=list)
+    node_score:       float = 0.0
+    relationships:    list[dict] = field(default_factory=list)
+    source_filename:  str   = ""   # which document this node came from
+    document_date:    str   = ""   # date the source document was written
+    doc_upload_order: int   = 0    # upload sequence number
 
 
 @dataclass
@@ -664,13 +675,23 @@ class GraphRetriever:
                   AND t.canonicalName IN $names
                   {case_filter}
                 RETURN
-                    h.canonicalName AS head,
-                    type(r)         AS relation,
-                    t.canonicalName AS tail
+                    h.canonicalName  AS head,
+                    type(r)          AS relation,
+                    t.canonicalName  AS tail,
+                    r.documentDate   AS document_date,
+                    r.sourceFilename AS source_filename,
+                    r.docUploadOrder AS doc_upload_order
             """, self._case_params({"names": node_names}))
 
             return [
-                (record["head"], record["relation"], record["tail"])
+                (
+                    record["head"],
+                    record["relation"],
+                    record["tail"],
+                    record["document_date"] or "",
+                    record["source_filename"] or "",
+                    record["doc_upload_order"] or 0,
+                )
                 for record in result
             ]
 

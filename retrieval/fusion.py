@@ -111,9 +111,21 @@ class FusedContext:
         # Graph triples — annotated by strength
         if self.subgraph_triples:
             lines.append("Relationships:")
-            for head, rel, tail in self.subgraph_triples[:30]:
-                strength = _relation_strength(rel)
-                lines.append(f"  [{strength}] ({head}) --[{rel}]--> ({tail})")
+            for triple in self.subgraph_triples[:30]:
+                head, rel, tail = triple[0], triple[1], triple[2]
+                doc_date    = triple[3] if len(triple) > 3 else ""
+                source_file = triple[4] if len(triple) > 4 else ""
+                strength    = _relation_strength(rel)
+                provenance  = ""
+                if source_file and doc_date:
+                    provenance = f" | {source_file} | {doc_date}"
+                elif source_file:
+                    provenance = f" | {source_file}"
+                elif doc_date:
+                    provenance = f" | {doc_date}"
+                lines.append(
+                    f"  [{strength}] ({head}) --[{rel}]--> ({tail}){provenance}"
+                )
         else:
             lines.append("No direct relationships found between retrieved entities.")
 

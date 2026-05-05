@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 MAX_HOPS = 3
 SUFFICIENCY_CONFIDENCE_THRESHOLD = 0.80
 MIN_TYPED_TRIPLE_RATIO = 0.10
-FAST_PATH_HIGH_CONFIDENCE_MIN = 3
+FAST_PATH_HIGH_CONFIDENCE_MIN = 5
 
 
 # ── Data Structures ────────────────────────────────────────────────────────────
@@ -98,39 +98,34 @@ Respond in this exact JSON format:
   "reasoning": "brief explanation referencing typed vs weak evidence"
 }}"""
 
-    ANSWER_PROMPT = """You are an expert legal document analyst answering questions about a legal case.
+    ANSWER_PROMPT = """You are an expert legal analyst answering questions about a legal document.
 
-Answer the following query based ONLY on the provided context.
-Every factual claim MUST be specific and cited.
+Answer the query based ONLY on the provided context. Never fabricate facts.
 
 Query: {query}
 
 Context:
 {context}
 
-Critical rules:
-1. Be specific — cite exact numbers, amounts, dates, names, case numbers, section references.
-   Do NOT give vague answers when precise information is available in the context.
-2. Cite every claim: use [Graph: Entity→RELATIONSHIP→Entity] or [Document: Page N].
-3. [weak] graph relationships (co-occurrence) are NOT legal evidence — do not use them
-   to infer causation, justification, or legal standing.
-4. Only [typed] relationships carry semantic meaning and can support legal claims.
-5. If the context contains partial information, extract everything available and
-   state specifically what is present vs what is missing.
-6. Only say "I don't know" if the context contains absolutely nothing relevant.
-7. For financial amounts: cite the exact figure and its source page.
-8. For court orders: cite the exact date, court name, and what was ordered.
-9. For legal relationships: cite the specific statute, section, or agreement.
-10. FORMAT: Match response length to query complexity. Simple question = short answer (2-3 sentences). Relationship list = bullet points, one per line. Complex analysis = short paragraphs. Never write continuous prose for list-type answers.
+Rules:
+1. Cite every factual claim — use [Graph: Entity→RELATIONSHIP→Entity] or [Document: Page N].
+2. [weak] and [RELATED_TO] relationships are NOT evidence — never use them to support a claim.
+3. Only [typed] relationships carry semantic meaning and can be cited as evidence.
+4. If information is missing from context, say so specifically.
+5. Format your response to match the query type:
+   - Factual question → direct answer in 2-3 sentences
+   - List/relationship question → bullet points, one item per line
+   - Analysis/argument question → structured paragraphs with clear headings
+   - Use **bold** for entity names and key terms within your answer
 
 Respond in this exact JSON format:
 {{
-  "answer": "Your structured answer. FORMAT RULES: For simple factual queries (who, what, when, how much) — answer in 2-3 concise sentences maximum with inline citations. For relationship queries — use a short bulleted list, one relationship per line. For complex queries — use short paragraphs with clear headings. NEVER write a wall of text. NEVER list all relationships as a numbered paragraph — use line breaks. Keep each point to one sentence. Example of good format for relationship query: '**Buyer → Supplier**: The buyer governs the supplier under the CTC [Graph]. **Supplier → Policy**: The supplier is bound by the responsible sourcing policy [Graph: Page 4].'",
+  "answer": "your answer here",
   "citations": [
-    {{"text": "key claim or quote", "source": "Graph|Document", "page": 0, "detail": "relationship or section"}}
+    {{"text": "key claim", "source": "Graph|Document", "page": 0, "detail": "relationship or section"}}
   ],
   "confidence": 0.0-1.0,
-  "answer_type": "DIRECT|INFERRED|PARTIAL",
+  "answer_type": "DIRECT|INFERRED|PARTIAL|COMPLEX",
   "reasoning": "brief explanation of evidence quality"
 }}"""
 

@@ -274,6 +274,8 @@ class GraphBuilder:
             r.case_id     = $case_id,
             r.sourceDocId   = $sourceDocId,
             r.sourceFilename = $sourceFilename,
+            r.documentDate = $documentDate,
+            r.docUploadOrder = $docUploadOrder,
             r.createdAt   = timestamp()
         ON MATCH SET
             r.confidence  = CASE
@@ -292,6 +294,8 @@ class GraphBuilder:
             "case_id":     case_id,
             "sourceDocId": getattr(rel, "source_doc_id", ""),
             "sourceFilename": getattr(rel, "source_filename", rel.source_pdf),
+            "documentDate": getattr(rel, "document_date", ""),
+            "docUploadOrder": getattr(rel, "doc_upload_order", 0),
         })
 
     # ── Safety Helpers ─────────────────────────────────────────────────────────

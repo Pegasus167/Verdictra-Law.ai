@@ -138,6 +138,8 @@ class ExtractedRelationship:
     confidence: float
     source_doc_id: str = ""
     source_filename: str = ""
+    document_date: str = ""
+    doc_upload_order: int = 0
 
 
 @dataclass
