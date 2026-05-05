@@ -44,7 +44,16 @@ function DeepResearchContent({ content }: { content: string }) {
         if (line.trim() === '') {
           return <div key={i} className="h-1" />
         }
-        return <p key={i} className="text-xs leading-relaxed" style={{ color: 'var(--text)' }}>{line}</p>
+        const parts = line.split(/\*\*(.*?)\*\*/g)
+        return (
+          <p key={i} className="text-xs" style={{ color: 'var(--muted2)', lineHeight: 1.7 }}>
+            {parts.map((part, j) =>
+              j % 2 === 1
+                ? <strong key={j} style={{ color: 'var(--text)', fontWeight: 600 }}>{part}</strong>
+                : <span key={j}>{part}</span>
+            )}
+          </p>
+        )
       })}
     </div>
   )
