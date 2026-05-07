@@ -745,7 +745,7 @@ class GraphRetriever:
 
         distances, indices = self._faiss_index.search(query_vec, top_k)
         similarities: dict[str, float] = {}
-        for dist, idx in zip(distances[0], np.indices[0]):
+        for dist, idx in zip(distances[0], indices[0]):
             if idx == -1:
                 continue
             name = self._idx_to_entity.get(int(idx))
