@@ -514,7 +514,8 @@ export default function QueryPage() {
                       )}
                       {msg.citations && msg.citations.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-3">
-                          {msg.citations.map((c, i) => {
+                          {[...new Map(msg.citations.filter(c => c.page).map(c => [c.page, c])).values()]
+                            .map((c, i) => {
                             const key = `${msg.id}-${i}`
                             return (
                               <button key={key}
