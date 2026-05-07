@@ -35,6 +35,9 @@ export default function ReviewPage() {
   const [activeCitation, setActiveCitation] = useState<string | undefined>()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [deletedGroups, setDeletedGroups] = useState<Set<number>>(new Set())
+  const [reviewNote, setReviewNote] = useState('')
+  const [reviewNoteOpen, setReviewNoteOpen] = useState(false)
+  const [reviewNotes, setReviewNotes] = useState<{id: string, page: number, text: string}[]>([])
 
   // Per-group UI state — stored in a ref so it survives re-renders
   // and navigation within the same component mount
@@ -275,6 +278,12 @@ export default function ReviewPage() {
         style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', height: 52 }}>
         <div className="flex items-center gap-3">
           <span className="font-bold text-sm tracking-wider" style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra / Resolve</span>
+          <button
+            onClick={() => navigate(`/summary/${caseId}`)}
+            className="text-xs px-2.5 py-1 rounded"
+            style={{ color: 'var(--muted2)', border: '1px solid var(--border2)', background: 'var(--surface2)' }}>
+            View Summary
+          </button>
           <div className="flex items-center gap-2">
             <div className="w-40 h-0.5 rounded-full overflow-hidden" style={{ background: 'var(--border2)' }}>
               <div className="h-full rounded-full transition-all duration-300"
@@ -526,17 +535,17 @@ export default function ReviewPage() {
             <button onClick={() => stageDecision('MERGE')}
               className="px-5 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
               style={{ background: 'var(--accent)', color: 'white' }}>
-              <Check size={12} /> Stage Merge
+              <Check size={12} /> Merge into Buckets
             </button>
             <button onClick={() => stageDecision('KEEP')}
               className="px-5 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
               style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)' }}>
-              <X size={12} /> Stage Keep Separate
+              <X size={12} /> Keep All Separate
             </button>
             <button onClick={() => stageDecision('SKIP')}
               className="px-4 py-2 rounded-lg text-xs transition-colors flex items-center gap-1.5"
               style={{ background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)' }}>
-              <SkipForward size={12} /> Skip
+              <SkipForward size={12} /> Skip for Now
             </button>
             {staged[String(currentIdx)] && (
               <span className="ml-auto text-xs px-2.5 py-1 rounded"
@@ -569,6 +578,8 @@ export default function ReviewPage() {
         {pdfOpen && (
           <div className="flex-shrink-0 flex flex-col overflow-hidden"
             style={{ width: 420, background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
+            
+            {/* Toolbar */}
             <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
               style={{ borderBottom: '1px solid var(--border)' }}>
               <span className="text-xs" style={{ color: 'var(--accent2)' }}>
@@ -586,6 +597,8 @@ export default function ReviewPage() {
                 </button>
               </div>
             </div>
+
+            {/* iframe */}
             <iframe
               key={`${pdfFile}-${pdfPage}`}
               src={`/pdf/${caseId}/${pdfFile}#page=${pdfPage}`}
@@ -593,6 +606,66 @@ export default function ReviewPage() {
               style={{ border: 'none', background: '#fcf9f5' }}
               title="PDF Viewer"
             />
+
+            {/* Notes panel */}
+            <div className="flex-shrink-0" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
+              <button
+                onClick={() => setReviewNoteOpen(o => !o)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-xs"
+                style={{ color: 'var(--muted2)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                <div className="flex items-center gap-2">
+                  <span>📝</span>
+                  <span>Add a note {reviewNotes.filter(n => n.page === pdfPage).length > 0 ? `· ${reviewNotes.filter(n => n.page === pdfPage).length} on this page` : ''}</span>
+                </div>
+                <span>{reviewNoteOpen ? '▾' : '▴'}</span>
+              </button>
+
+              {reviewNoteOpen && (
+                <div className="px-4 pb-4 flex flex-col gap-2.5">
+                  <textarea
+                    autoFocus
+                    value={reviewNote}
+                    onChange={e => setReviewNote(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        if (reviewNote.trim()) {
+                          setReviewNotes(prev => [...prev, {
+                            id: Date.now().toString(),
+                            page: pdfPage,
+                            text: reviewNote.trim()
+                          }])
+                          setReviewNote('')
+                          setReviewNoteOpen(false)
+                        }
+                      }
+                      if (e.key === 'Escape') { setReviewNoteOpen(false); setReviewNote('') }
+                    }}
+                    placeholder="Note for this page... (Enter to save, Esc to cancel)"
+                    rows={3}
+                    className="w-full rounded-md px-2.5 py-1.5 text-xs outline-none resize-y"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--text)', minHeight: 60, maxHeight: 200 }}
+                  />
+                  {reviewNotes.length > 0 && (
+                    <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+                      {reviewNotes.map(n => (
+                        <div key={n.id} className="flex items-start gap-2 px-2 py-1.5 rounded text-xs"
+                          style={{ background: '#f4dfcb', border: '1px solid #6b5c4c' }}>
+                          <span style={{ color: 'var(--accent2)', flexShrink: 0 }}>p.{n.page}</span>
+                          <span className="flex-1" style={{ color: 'var(--text)' }}>{n.text}</span>
+                          <button
+                            onClick={() => setReviewNotes(prev => prev.filter(x => x.id !== n.id))}
+                            style={{ color: 'var(--muted)', flexShrink: 0 }}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
       </div>
