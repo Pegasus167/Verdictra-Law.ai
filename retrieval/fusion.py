@@ -295,8 +295,8 @@ class FusionEngine:
 
         # Count typed vs weak triples for agent sufficiency awareness
         typed_count = sum(
-            1 for _, rel, _ in subgraph
-            if _relation_strength(rel) == "typed"
+            1 for triple in subgraph
+            if _relation_strength(triple[1]) == "typed"
         )
         weak_count = len(subgraph) - typed_count
 
