@@ -185,16 +185,21 @@ Respond in this exact JSON format:
         graph_retriever=None,
         tree_retriever=None,
         fusion_engine=None,
+        query_type: str = "FACT",
     ) -> FinalAnswer:
         """Standard query answering with confidence routing and multi-hop."""
         current_context = fused_context
         hops = 0
 
-        # Fast path — skip sufficiency check for high-confidence context
-        if current_context.high_confidence_count >= FAST_PATH_HIGH_CONFIDENCE_MIN:
+        # Fast path — only for simple FACT queries with high confidence
+        # COMPLEX and RELATIONSHIP queries always go through sufficiency check
+        if (
+            query_type == "FACT"
+            and current_context.high_confidence_count >= FAST_PATH_HIGH_CONFIDENCE_MIN
+        ):
             logger.info(
-                f"Fast path: {current_context.high_confidence_count} HIGH confidence "
-                f"results — skipping sufficiency check"
+                f"Fast path: FACT query with {current_context.high_confidence_count} "
+                f"HIGH confidence results — skipping sufficiency check"
             )
             return self._generate_answer(query, current_context, hops)
 
@@ -224,7 +229,7 @@ Respond in this exact JSON format:
             else:
                 break
 
-        return self._generate_answer(query, current_context, hops)
+        return self._generate_answer(query, current_context, hops, query_type)
 
     # ── Deep Research mode ─────────────────────────────────────────────────────
 
@@ -371,9 +376,22 @@ Respond in this exact JSON format:
         query: str,
         context: FusedContext,
         hops_taken: int,
+        query_type: str = "FACT",
     ) -> FinalAnswer:
         try:
             context_str = context.to_prompt_context()
+
+            # Adjust depth based on query type
+            if query_type == "COMPLEX":
+                max_tokens = 3000
+                type_instruction = "\nThis is a COMPLEX analytical query. Produce a structured response with clear headings and sub-points. Go deep — the lawyer needs a thorough understanding, not a summary."
+            elif query_type == "RELATIONSHIP":
+                max_tokens = 2000
+                type_instruction = "\nThis is a RELATIONSHIP query. List every relevant relationship as a bullet point. One relationship per line. Be exhaustive."
+            else:
+                max_tokens = 1500
+                type_instruction = "\nThis is a FACT query. Answer directly and concisely in 2-3 sentences."
+
             response = self._client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{
@@ -381,11 +399,11 @@ Respond in this exact JSON format:
                     "content": self.ANSWER_PROMPT.format(
                         query=query,
                         context=context_str[:16000],
-                    )
+                    ) + type_instruction
                 }],
                 response_format={"type": "json_object"},
                 temperature=0.1,
-                max_tokens=2000,
+                max_tokens=max_tokens,
             )
 
             data = json.loads(response.choices[0].message.content)

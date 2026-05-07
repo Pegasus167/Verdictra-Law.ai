@@ -146,7 +146,7 @@ class QueryPipeline:
 
         if classification.query_type in (QueryType.RELATIONSHIP, QueryType.COMPLEX):
             logger.info("  Running graph path (Cypher-first)...")
-            graph_result = self.graph_retriever.search(question, top_k=20)
+            graph_result = self.graph_retriever.search(question, top_k=30 if classification.query_type == QueryType.COMPLEX else 20)
             path_used = "Cypher+KGE" if graph_result.escalated_to_kge else "Cypher"
             logger.info(
                 f"  Graph ({path_used}): {len(graph_result.nodes)} nodes, "
@@ -176,6 +176,7 @@ class QueryPipeline:
             graph_retriever=self.graph_retriever,
             tree_retriever=self.tree_retriever,
             fusion_engine=self.fusion,
+            query_type=classification.query_type.value,
         )
 
         logger.info(
