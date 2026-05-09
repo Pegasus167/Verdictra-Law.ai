@@ -55,15 +55,21 @@ _ingestion_locks_mutex = threading.Lock()
 _global_ingestion_semaphore = threading.Semaphore(1)
 
 app = FastAPI(title="LAW.ai")
-from resolver_ui.auth import require_auth, router as auth_router
+
+# ── CHANGE 1: added startup_auth and check_case_limit ─────────────────────────
+from resolver_ui.auth import require_auth, router as auth_router, startup_auth, check_case_limit
 from fastapi import Depends
 app.include_router(auth_router)
 templates = Jinja2Templates(directory="resolver_ui/templates")
 
-# CORS — allow React frontend on port 3000
+# ── CHANGE 2: added server IP to CORS origins ─────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://168.144.86.77",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -74,6 +80,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def on_startup():
+    # ── CHANGE 3: initialises SQLite user DB and migrates pilot users ──────────
+    startup_auth()
     settings.ensure_dirs()
     for case_dir in settings.cases_dir.iterdir():
         if case_dir.is_dir():
@@ -250,8 +258,6 @@ async def kge_status(case_id: str):
     except Exception:
         return JSONResponse({"case_id": case_id, "kge_status": "not_started"})
 
-# ── 1. ADD /domains endpoint ───────────
- 
 @app.get("/domains")
 async def list_domains():
     """Return available case domains for the upload form dropdown."""
@@ -261,7 +267,6 @@ async def list_domains():
         return JSONResponse(registry.list_domains())
     except Exception as e:
         logger.error(f"Failed to load domains: {e}")
-        # Fallback hardcoded list if registry fails
         return JSONResponse([
             {"id": "constitutional", "name": "Constitutional & Writ",   "description": "Writ petitions, fundamental rights, Article 226/32, PIL"},
             {"id": "property",       "name": "Property & Real Estate",   "description": "Property disputes, lease, SARFAESI auctions, development authority"},
@@ -429,6 +434,12 @@ async def upload_case(
     case_id = re.sub(r"[^a-z0-9_]", "_", case_name.lower().strip())
     case_id = re.sub(r"_+", "_", case_id).strip("_")
 
+    # ── CHANGE 4: plan limit check before case is created ─────────────────────
+    if user.role != "admin":
+        user_cases = [c for c in all_cases() if c.get("created_by") == user.username]
+        check_case_limit(user, len(user_cases))
+    # ──────────────────────────────────────────────────────────────────────────
+
     settings.ensure_case_dirs(case_id)
 
     # Initialise document registry
@@ -507,9 +518,6 @@ async def upload_case(
         "documents": [{"doc_id": f["doc_id"], "filename": f["filename"]} for f in saved_files],
     })
 
-# 3. Add new _run_ingestion_background_multi function.
-#    Place it RIGHT AFTER the existing _run_ingestion_background function.
-#    Add this complete function:
 
 def _run_ingestion_background_multi(saved_files: list, case_id: str):
     """
@@ -545,7 +553,6 @@ def _run_ingestion_background_multi(saved_files: list, case_id: str):
             except Exception as e:
                 logger.error(f"[Ingestion] {filename} failed: {e}")
                 registry.update_status(doc_id, "failed")
-                # Update case metadata with error
                 try:
                     meta = load_metadata(case_id)
                     meta["status"] = "failed"
@@ -554,7 +561,7 @@ def _run_ingestion_background_multi(saved_files: list, case_id: str):
                         json.dump(meta, f, indent=2)
                 except Exception:
                     pass
-                return  # Stop processing remaining files on failure
+                return
 
         # All files processed — run entity resolver once
         logger.info(f"[Resolver] Running entity resolver for {case_id}...")
@@ -596,7 +603,6 @@ def _run_ingestion_background_multi(saved_files: list, case_id: str):
         except Exception:
             pass
 
-# ── After Query page to add more files ─────────────────────────────────────────────────────────────
 
 @app.post("/cases/{case_id}/documents")
 async def add_documents(
@@ -607,7 +613,6 @@ async def add_documents(
     """Add new documents to an existing case and trigger incremental ingestion."""
     from pipeline.document_registry import DocumentRegistry
 
-    # Check case exists and user has access
     try:
         meta = load_metadata(case_id)
         if user.role != "admin" and meta.get("created_by") != user.username:
@@ -632,7 +637,6 @@ async def add_documents(
         saved_files.append({"doc_id": doc_id, "filename": filename, "path": str(file_path)})
         logger.info(f"Added {filename} as {doc_id} to existing case {case_id}")
 
-    # Prevent concurrent ingestion
     with _ingestion_locks_mutex:
         if _ingestion_locks.get(case_id):
             return JSONResponse(
@@ -663,6 +667,8 @@ async def add_documents(
         "doc_count": len(saved_files),
         "documents": [{"doc_id": f["doc_id"], "filename": f["filename"]} for f in saved_files],
     })
+
+
 # ── Stage decision ─────────────────────────────────────────────────────────────
 
 @app.post("/stage/{case_id}")
@@ -718,10 +724,10 @@ async def confirm_all(case_id: str):
             )
 
     save_state(case_id, state)
-    # Build confirmed entity registry from decisions
+
     try:
         from pipeline.entity_management import EntityRegistry
-        entity_reg= EntityRegistry(settings.case_path(case_id))
+        entity_reg = EntityRegistry(settings.case_path(case_id))
         entity_reg.build_from_resolution_state(
             resolution_state_path=settings.case_resolution_state(case_id),
             confirmed_by="human",
@@ -729,8 +735,7 @@ async def confirm_all(case_id: str):
         logger.info(f"[Registry] Entity registry built for {case_id} - {entity_reg.get_confirmed_count()} confirmed entities")
     except Exception as e:
         logger.warning(f"[Registry] Build failed for {case_id}: {e}")
-        
-    # Apply decisions to Neo4j
+
     try:
         from pipeline.entity_resolver import EntityResolver
         EntityResolver().apply_decisions(
@@ -740,12 +745,10 @@ async def confirm_all(case_id: str):
     except Exception as e:
         logger.error(f"Neo4j apply failed: {e}")
 
-    # Clear staged decisions
     sp = staged_path(case_id)
     if sp.exists():
         sp.unlink()
 
-    # Mark case ready
     try:
         meta = load_metadata(case_id)
         meta["status"]     = "ready"
@@ -755,7 +758,6 @@ async def confirm_all(case_id: str):
     except Exception:
         pass
 
-    # Fire KGE training in background — non-blocking
     try:
         from pipeline.kge_trainer import start_kge_training
         started = start_kge_training(case_id)
@@ -766,9 +768,6 @@ async def confirm_all(case_id: str):
 
     return JSONResponse({"status": "committed", "count": len(staged)})
 
-# ── Add both endpoints to resolver_ui/app.py ──────────────────────────────────
-# Place after the /confirm-all endpoint
-
 
 @app.delete("/cases/{case_id}")
 async def delete_case(case_id: str, user=Depends(require_auth)):
@@ -777,8 +776,7 @@ async def delete_case(case_id: str, user=Depends(require_auth)):
     - Wipes all Neo4j nodes and relationships for this case_id
     - Deletes the case folder from disk
     """
-    # Check ownership
-    try: 
+    try:
         meta = load_metadata(case_id)
         if user.role != "admin" and meta.get("created_by") != user.username:
             return JSONResponse(
@@ -791,7 +789,6 @@ async def delete_case(case_id: str, user=Depends(require_auth)):
 
     errors = []
 
-    # 1. Wipe Neo4j nodes for this case
     try:
         from pipeline.graph_builder import GraphBuilder
         with GraphBuilder() as builder:
@@ -801,7 +798,6 @@ async def delete_case(case_id: str, user=Depends(require_auth)):
         logger.error(f"Neo4j clear failed for '{case_id}': {e}")
         errors.append(f"Graph clear failed: {e}")
 
-    # 2. Delete case folder from disk
     try:
         case_dir = settings.case_path(case_id)
         if case_dir.exists():
@@ -813,7 +809,6 @@ async def delete_case(case_id: str, user=Depends(require_auth)):
         logger.error(f"Folder delete failed for '{case_id}': {e}")
         errors.append(f"Folder delete failed: {e}")
 
-    # 3. Clear pipeline cache so next upload doesn't use stale state
     cache_key = f"pipeline_{case_id}"
     if hasattr(app.state, cache_key):
         delattr(app.state, cache_key)
@@ -829,10 +824,7 @@ async def delete_case(case_id: str, user=Depends(require_auth)):
 
 @app.post("/retry/{case_id}")
 async def retry_ingestion(case_id: str):
-    """
-    Retry a failed ingestion.
-    Resets metadata status to processing and re-fires the pipeline.
-    """
+    """Retry a failed ingestion."""
     try:
         meta = load_metadata(case_id)
     except Exception:
@@ -847,19 +839,16 @@ async def retry_ingestion(case_id: str):
             status_code=404,
         )
 
-    # Reset metadata
     meta["status"]        = "processing"
     meta["current_stage"] = 1
     meta.pop("error", None)
     with open(settings.case_metadata(case_id), "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
 
-    # Clear any stale pipeline cache
     cache_key = f"pipeline_{case_id}"
     if hasattr(app.state, cache_key):
         delattr(app.state, cache_key)
 
-    # Re-fire ingestion in background thread
     thread = threading.Thread(
         target=_run_ingestion_background,
         args=(str(pdf_path), case_id),
@@ -870,6 +859,7 @@ async def retry_ingestion(case_id: str):
     logger.info(f"Retry ingestion started for {case_id}")
 
     return JSONResponse({"status": "retrying", "case_id": case_id})
+
 
 # ── Ask — SSE streaming ────────────────────────────────────────────────────────
 
@@ -897,20 +887,17 @@ async def ask(case_id: str, request: Request, user=Depends(require_auth)):
 
             answer = pipeline.query(question)
 
-            # Log graph relationships
             logger.info(f"\n=== [{case_id}] GRAPH RELATIONSHIPS ===")
             for c in (answer.citations or []):
                 if c.get("source") == "Graph":
                     logger.info(f"  [Graph] {c.get('detail', '')} p.{c.get('page', '')}")
 
-            # Stream words
             words = answer.answer.split(" ")
             for i, word in enumerate(words):
                 chunk = word + (" " if i < len(words) - 1 else "")
                 yield f"data: {json.dumps({'type': 'word', 'content': chunk})}\n\n"
                 await asyncio.sleep(0.04)
 
-            # Build document citations only
             pdf_filename = load_metadata(case_id).get("pdf_filename", "")
             citations = [
                 {
@@ -924,7 +911,6 @@ async def ask(case_id: str, request: Request, user=Depends(require_auth)):
 
             yield f"data: {json.dumps({'type': 'done', 'citations': citations, 'confidence': answer.confidence, 'answer_type': answer.answer_type, 'hops': answer.hops_taken})}\n\n"
 
-            # Save to conversation history
             history = load_conversation(case_id)
             history.append({
                 "question":    question,
@@ -949,13 +935,13 @@ async def ask(case_id: str, request: Request, user=Depends(require_auth)):
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
-# ── DEEP RESEARCH endpoint ──
+
+# ── Deep Research endpoint ─────────────────────────────────────────────────────
 
 @app.post("/deep-research/{case_id}")
 async def deep_research(case_id: str, request: Request, user=Depends(require_auth)):
     """
     Deep Research mode — comprehensive analysis using all available context.
-    Activates when lawyer clicks the Deep Research button in QueryPage.
     Returns a structured research report with 9 sections.
     """
     import asyncio
@@ -978,7 +964,6 @@ async def deep_research(case_id: str, request: Request, user=Depends(require_aut
                 setattr(app.state, cache_key, pipeline)
             pipeline = getattr(app.state, cache_key)
 
-            # Run COMPLEX classification to get both graph + tree paths
             from retrieval.query_classifier import QueryType
             graph_result = pipeline.graph_retriever.search(query, top_k=50)
             tree_results = pipeline.tree_retriever.search(query, top_k=20)
@@ -986,7 +971,6 @@ async def deep_research(case_id: str, request: Request, user=Depends(require_aut
                 query, graph_result, tree_results, pipeline.graph_retriever
             )
 
-            # Deep research mode on the agent
             answer = pipeline.agent.deep_research(
                 query,
                 fused,
@@ -1001,14 +985,12 @@ async def deep_research(case_id: str, request: Request, user=Depends(require_aut
                 f"confidence={answer.confidence:.2f}"
             )
 
-            # Stream words
             words = answer.answer.split(" ")
             for i, word in enumerate(words):
                 chunk = word + (" " if i < len(words) - 1 else "")
                 yield f"data: {json.dumps({'type': 'word', 'content': chunk})}\n\n"
                 await asyncio.sleep(0.02)
 
-            # Build citations
             pdf_filename = load_metadata(case_id).get("pdf_filename", "")
             citations = [
                 {
@@ -1022,7 +1004,6 @@ async def deep_research(case_id: str, request: Request, user=Depends(require_aut
 
             yield f"data: {json.dumps({'type': 'done', 'citations': citations, 'confidence': answer.confidence, 'answer_type': 'DEEP_RESEARCH', 'hops': answer.hops_taken})}\n\n"
 
-            # Save to conversation history
             history = load_conversation(case_id)
             history.append({
                 "question":    f"[DEEP RESEARCH] {query}",
@@ -1045,6 +1026,8 @@ async def deep_research(case_id: str, request: Request, user=Depends(require_aut
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
 # ── Legacy redirects ───────────────────────────────────────────────────────────
 
 @app.get("/review", response_class=HTMLResponse)
@@ -1066,6 +1049,7 @@ async def complete_legacy(request: Request):
 async def serve_pdf_legacy(filename: str):
     return RedirectResponse(f"/pdf/celir_case/{filename}")
 
+
 @app.get("/annotations/{case_id}")
 async def get_annotations(case_id: str):
     """Load all post-it annotations for a case."""
@@ -1074,53 +1058,53 @@ async def get_annotations(case_id: str):
         return JSONResponse([])
     with open(path, "r", encoding="utf-8") as f:
         return JSONResponse(json.load(f))
- 
- 
+
+
 @app.post("/annotations/{case_id}")
 async def create_annotation(case_id: str, request: Request):
     """Save a new post-it annotation."""
     body = await request.json()
- 
+
     path = settings.case_path(case_id) / "annotations.json"
     existing = []
     if path.exists():
         with open(path, "r", encoding="utf-8") as f:
             existing = json.load(f)
- 
+
     annotation = {
-        "id": f"ann_{uuid.uuid4().hex[:8]}",
-        "page": body.get("page"),
-        "pdf": body.get("pdf"),
-        "note": body.get("note", ""),
-        "position": body.get("position", {"x": 0.1, "y": 0.1}),
+        "id":          f"ann_{uuid.uuid4().hex[:8]}",
+        "page":        body.get("page"),
+        "pdf":         body.get("pdf"),
+        "note":        body.get("note", ""),
+        "position":    body.get("position", {"x": 0.1, "y": 0.1}),
         "anchor_text": body.get("anchor_text", ""),
-        "color": body.get("color", "#fef08a"),
-        "created_at": datetime.now().isoformat(),
+        "color":       body.get("color", "#fef08a"),
+        "created_at":  datetime.now().isoformat(),
     }
- 
+
     existing.append(annotation)
- 
+
     with open(path, "w", encoding="utf-8") as f:
         json.dump(existing, f, indent=2, ensure_ascii=False)
- 
+
     return JSONResponse(annotation)
- 
- 
+
+
 @app.delete("/annotations/{case_id}/{annotation_id}")
 async def delete_annotation(case_id: str, annotation_id: str):
     """Delete a post-it annotation by id."""
     path = settings.case_path(case_id) / "annotations.json"
     if not path.exists():
         return JSONResponse({"status": "not_found"})
- 
+
     with open(path, "r", encoding="utf-8") as f:
         existing = json.load(f)
- 
+
     existing = [a for a in existing if a["id"] != annotation_id]
- 
+
     with open(path, "w", encoding="utf-8") as f:
         json.dump(existing, f, indent=2, ensure_ascii=False)
- 
+
     return JSONResponse({"status": "deleted"})
 
 

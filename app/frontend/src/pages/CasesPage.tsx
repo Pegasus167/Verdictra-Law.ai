@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Upload, Scale, Clock, AlertCircle, Loader2, Trash2 } from 'lucide-react'
+import { Upload, Scale, Clock, AlertCircle, Loader2, Trash2, User } from 'lucide-react'
 import { api } from '../lib/api'
 import { formatDate } from '../lib/utils'
 import type { Case } from '../types'
+import WelcomePage from './WelcomePage'
 
 const STATUS_CONFIG = {
   ready:      { label: 'Ready',        color: 'text-emerald-400', dot: 'bg-emerald-400' },
@@ -18,17 +19,22 @@ interface Domain {
 }
 
 export default function CasesPage() {
-  const [cases, setCases]       = useState<Case[]>([])
-  const [domains, setDomains]   = useState<Domain[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [uploading, setUploading] = useState(false)
-  const [caseName, setCaseName] = useState('')
-  const [files, setFiles]         = useState<File[]>([])
-  const [domain, setDomain]     = useState('constitutional')
-  const [error, setError]       = useState('')
+  const [cases, setCases]           = useState<Case[]>([])
+  const [domains, setDomains]       = useState<Domain[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [uploading, setUploading]   = useState(false)
+  const [caseName, setCaseName]     = useState('')
+  const [files, setFiles]           = useState<File[]>([])
+  const [domain, setDomain]         = useState('constitutional')
+  const [error, setError]           = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const fileRef                 = useRef<HTMLInputElement>(null)
-  const navigate                = useNavigate()
+  const fileRef                     = useRef<HTMLInputElement>(null)
+  const navigate                    = useNavigate()
+
+  // Welcome screen — shown on first login only
+  const [showWelcome, setShowWelcome] = useState(
+    localStorage.getItem('first_login') === 'true'
+  )
 
   useEffect(() => {
     api.getCases()
@@ -36,10 +42,9 @@ export default function CasesPage() {
       .catch(() => setError('Failed to load cases'))
       .finally(() => setLoading(false))
 
-    // Load domains for dropdown
     api.getDomains()
       .then(d => { if (d.length > 0) setDomains(d) })
-      .catch(() => {}) // non-fatal — fallback options always shown
+      .catch(() => {})
   }, [])
 
   async function handleUpload(e: React.FormEvent) {
@@ -67,7 +72,7 @@ export default function CasesPage() {
     if (!window.confirm('Delete this case? This cannot be undone.')) return
     setDeletingId(caseId)
     try {
-      const res = await api.deleteCase(caseId)
+      await api.deleteCase(caseId)
       setCases(prev => prev.filter(c => c.case_id !== caseId))
     } catch {
       setError('Failed to delete case. Please try again.')
@@ -76,38 +81,57 @@ export default function CasesPage() {
     }
   }
 
-  // Fallback domain options if /domains endpoint not yet available
   const domainOptions: Domain[] = domains.length > 0 ? domains : [
-    { id: 'constitutional', name: 'Constitutional & Writ',    description: '' },
-    { id: 'property',       name: 'Property & Real Estate',   description: '' },
-    { id: 'banking_finance',name: 'Banking & Finance',        description: '' },
-    { id: 'corporate',      name: 'Corporate & Company Law',  description: '' },
-    { id: 'criminal',       name: 'Criminal Law',             description: '' },
-    { id: 'tax',            name: 'Tax Law',                  description: '' },
-    { id: 'labour',         name: 'Labour & Employment',      description: '' },
-    { id: 'ip_patent',      name: 'IP & Patents',             description: '' },
+    { id: 'constitutional', name: 'Constitutional & Writ',   description: '' },
+    { id: 'property',       name: 'Property & Real Estate',  description: '' },
+    { id: 'banking_finance',name: 'Banking & Finance',       description: '' },
+    { id: 'corporate',      name: 'Corporate & Company Law', description: '' },
+    { id: 'criminal',       name: 'Criminal Law',            description: '' },
+    { id: 'tax',            name: 'Tax Law',                 description: '' },
+    { id: 'labour',         name: 'Labour & Employment',     description: '' },
+    { id: 'ip_patent',      name: 'IP & Patents',            description: '' },
   ]
+
+  // Detect plan limit error from upload response
+  const isPlanLimitError = error.toLowerCase().includes('case limit') ||
+                           error.toLowerCase().includes('upgrade')
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+
+      {/* Welcome overlay — first login only, not skippable until last step */}
+      {showWelcome && (
+        <WelcomePage
+          userName={localStorage.getItem('user_name') || ''}
+          onDismiss={() => {
+            setShowWelcome(false)
+            localStorage.removeItem('first_login')
+          }}
+        />
+      )}
 
       {/* Header */}
       <header style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
         className="h-14 flex items-center justify-between px-10">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Verdictra" style={{ height: 32, width: 'auto'}} />
-          <span className="font-bold tracking-wider text-sm" style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra</span>
+          <img src="/logo.png" alt="Verdictra" style={{ height: 32, width: 'auto' }} />
+          <span className="font-bold tracking-wider text-sm"
+            style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra</span>
           <span className="text-sm" style={{ color: 'var(--muted)' }}>Legal Intelligence</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <span className="text-xs" style={{ color: 'var(--muted)' }}>
             {localStorage.getItem('user_name') || ''}
           </span>
           <button
-            onClick={() => {
-              localStorage.clear()
-              navigate('/login')
-            }}
+            onClick={() => navigate('/profile')}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded"
+            style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)' }}
+            title="Profile & plan">
+            <User size={12} /> Profile
+          </button>
+          <button
+            onClick={() => { localStorage.clear(); navigate('/login') }}
             className="text-xs px-3 py-1.5 rounded"
             style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)' }}>
             Sign out
@@ -129,7 +153,7 @@ export default function CasesPage() {
 
           <form onSubmit={handleUpload} className="flex flex-col gap-4">
 
-            {/* Row 1 — case name + pdf */}
+            {/* Row 1 — case name + files */}
             <div className="flex gap-3 flex-wrap items-end">
               <div className="flex flex-col gap-1.5 flex-1 min-w-48">
                 <label className="text-xs" style={{ color: 'var(--muted)' }}>Case name</label>
@@ -140,11 +164,7 @@ export default function CasesPage() {
                   placeholder="e.g. CELIR LLP v. MIDC"
                   required
                   className="rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{
-                    background: 'var(--bg)',
-                    border: '1px solid var(--border2)',
-                    color: 'var(--text)',
-                  }}
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--text)' }}
                 />
               </div>
 
@@ -170,8 +190,7 @@ export default function CasesPage() {
                     ? 'Choose files...'
                     : files.length === 1
                       ? files[0].name
-                      : `${files.length} files selected`
-                  }
+                      : `${files.length} files selected`}
                 </button>
                 {files.length > 1 && (
                   <div className="flex flex-col gap-1 mt-1">
@@ -213,12 +232,7 @@ export default function CasesPage() {
                   value={domain}
                   onChange={e => setDomain(e.target.value)}
                   className="rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{
-                    background: 'var(--bg)',
-                    border: '1px solid var(--border2)',
-                    color: 'var(--text)',
-                    cursor: 'pointer',
-                  }}
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--text)', cursor: 'pointer' }}
                 >
                   {domainOptions.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
@@ -246,17 +260,28 @@ export default function CasesPage() {
                 {uploading ? 'Uploading...' : 'Upload →'}
               </button>
             </div>
-
           </form>
 
           {error && (
-            <p className="mt-3 text-xs text-red-400 flex items-center gap-1">
-              <AlertCircle size={12} /> {error}
-            </p>
+            <div className="mt-3">
+              <p className="text-xs text-red-400 flex items-center gap-1">
+                <AlertCircle size={12} /> {error}
+              </p>
+              {isPlanLimitError && (
+                <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>
+                  <a
+                    href="mailto:support@verdictra.ai?subject=Plan upgrade"
+                    style={{ color: 'var(--accent2)', textDecoration: 'none' }}>
+                    Email support@verdictra.ai →
+                  </a>
+                  {' '}to upgrade your plan.
+                </p>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Case list */}
+        {/* Case list header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xs font-semibold tracking-widest uppercase"
             style={{ color: 'var(--muted2)' }}>Existing Cases</h2>
@@ -270,12 +295,79 @@ export default function CasesPage() {
           <div className="flex justify-center py-16">
             <Loader2 size={24} className="animate-spin" style={{ color: 'var(--accent2)' }} />
           </div>
+
         ) : cases.length === 0 ? (
-          <div className="text-center py-16 flex flex-col items-center gap-3"
-            style={{ color: 'var(--muted)' }}>
-            <Scale size={32} className="opacity-20" />
-            <p className="text-sm">No cases yet. Upload a PDF to get started.</p>
+
+          /* ── Rich empty state ─────────────────────────────────────────────── */
+          <div className="rounded-xl p-10 flex flex-col items-center text-center"
+            style={{ border: '1px dashed var(--border2)', background: 'var(--surface)' }}>
+
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border2)' }}>
+              <Scale size={28} style={{ color: 'var(--accent2)', opacity: 0.5 }} />
+            </div>
+
+            <h3 className="text-base font-semibold mb-2">Upload your first case</h3>
+            <p className="text-sm mb-7 max-w-sm" style={{ color: 'var(--muted)', lineHeight: 1.65 }}>
+              Add a case bundle — one matter, as many documents as you need. Verdictra extracts
+              every party, date, amount, and order, then lets you query across all of them instantly.
+            </p>
+
+            <button
+              onClick={() => document.querySelector<HTMLInputElement>('input[placeholder="e.g. CELIR LLP v. MIDC"]')?.focus()}
+              className="px-6 py-2.5 rounded-lg text-sm font-bold mb-8"
+              style={{ background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer' }}>
+              + Start a new case above
+            </button>
+
+            {/* Format tip */}
+            <div className="w-full max-w-md rounded-lg p-4 text-left mb-5"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+              <div className="text-xs font-semibold tracking-widest uppercase mb-3"
+                style={{ color: 'var(--muted)' }}>Accepted formats</div>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {['PDF', 'DOCX', 'Scanned orders', 'Email (.eml)', 'Images'].map(f => (
+                  <span key={f} className="px-2 py-0.5 rounded text-xs"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border2)', color: 'var(--muted2)' }}>
+                    {f}
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                Max 50 MB per upload · Multiple files per case · Processing takes 1–3 min per document
+              </p>
+            </div>
+
+            {/* What happens next */}
+            <div className="w-full max-w-md rounded-lg overflow-hidden mb-6"
+              style={{ border: '1px solid var(--border)' }}>
+              {[
+                { n: '01', t: 'Entity extraction', d: 'Parties, dates, amounts, orders — found automatically.' },
+                { n: '02', t: 'Your review',        d: 'Confirm or correct extracted entities before they are committed.' },
+                { n: '03', t: 'Instant queries',    d: 'Ask anything — get a cited answer in under 30 seconds.' },
+              ].map((s, i) => (
+                <div key={s.n} className="flex gap-4 p-4 text-left"
+                  style={{ borderBottom: i < 2 ? '1px solid var(--border)' : 'none', background: 'var(--surface)' }}>
+                  <span className="text-xs font-bold flex-shrink-0 pt-0.5"
+                    style={{ color: 'var(--muted)', letterSpacing: '0.04em' }}>{s.n}</span>
+                  <div>
+                    <div className="text-xs font-semibold mb-1">{s.t}</div>
+                    <div className="text-xs" style={{ color: 'var(--muted)', lineHeight: 1.5 }}>{s.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>
+              Questions?{' '}
+              <a href="mailto:support@verdictra.ai"
+                style={{ color: 'var(--accent2)', textDecoration: 'none' }}>
+                support@verdictra.ai
+              </a>
+            </p>
           </div>
+          /* ── End empty state ──────────────────────────────────────────────── */
+
         ) : (
           <div className="flex flex-col gap-2.5">
             {cases.map(c => {

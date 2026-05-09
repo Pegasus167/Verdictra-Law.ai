@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Verdictra</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;500;600&family=Manrope:wght@400;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #fcf9f5; color: #1c1c1a; font-family: 'Manrope', sans-serif; }
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid #e5e2de; }
+    .logo-text { font-family: 'Noto Serif', serif; font-size: 18px; font-weight: 600; color: #17191b; text-decoration: none; }
+    .back { font-size: 13px; color: #75777a; text-decoration: none; }
+    .back:hover { color: #17191b; }
+    .content { max-width: 720px; margin: 0 auto; padding: 64px 40px 96px; }
+    .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #75777a; margin-bottom: 12px; }
+    h1 { font-family: 'Noto Serif', serif; font-size: 36px; font-weight: 600; color: #17191b; letter-spacing: -0.02em; margin-bottom: 8px; line-height: 1.2; }
+    .updated { font-size: 13px; color: #75777a; margin-bottom: 48px; }
+    h2 { font-family: 'Noto Serif', serif; font-size: 20px; font-weight: 500; color: #17191b; margin: 40px 0 12px; }
+    p { font-size: 15px; line-height: 1.7; color: #44474a; margin-bottom: 16px; }
+    ul { padding-left: 20px; margin-bottom: 16px; }
+    li { font-size: 15px; line-height: 1.7; color: #44474a; margin-bottom: 8px; }
+    .highlight { background: #f0ede9; border-left: 3px solid #6b5c4c; padding: 16px 20px; border-radius: 0 4px 4px 0; margin: 24px 0; }
+    .highlight p { margin-bottom: 0; }
+    a { color: #6b5c4c; }
+    footer { padding: 32px 40px; border-top: 1px solid #e5e2de; text-align: center; }
+    footer p { font-size: 13px; color: #75777a; margin-bottom: 0; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="logo-text">Verdictra</a>
+  <a href="/" class="back">← Back to home</a>
+</nav>
+
+<div class="content">
+  <div class="eyebrow">Legal</div>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: January 2025. Effective from the date of account creation.</p>
+
+  <div class="highlight">
+    <p><strong>The short version:</strong> Your case files stay on our server in Bangalore. We never sell your data. OpenAI processes only the text of your queries — your original documents are never transmitted to any third party.</p>
+  </div>
+
+  <h2>1. Who we are</h2>
+  <p>Verdictra is an AI-powered legal intelligence platform operated from India. Our server infrastructure is hosted exclusively in the Bangalore, India region (DigitalOcean BLR1). For any privacy concerns, contact us at <a href="mailto:privacy@verdictra.ai">privacy@verdictra.ai</a>.</p>
+
+  <h2>2. What data we collect</h2>
+  <ul>
+    <li><strong>Account information:</strong> Your name, email address, firm name (if applicable), and password (stored as a secure hash — we never store your plaintext password).</li>
+    <li><strong>Case files:</strong> Documents you upload (PDFs, DOCX, emails, images). These are stored on our Bangalore server and are never transmitted to any third party.</li>
+    <li><strong>Query text:</strong> The text of questions you ask. Query text is sent to OpenAI's API (GPT-4o) to generate answers. No document content is included — only the question and relevant extracted facts.</li>
+    <li><strong>Usage data:</strong> Case count, query count, and login timestamps. Used solely for plan enforcement and service improvement.</li>
+  </ul>
+
+  <h2>3. How we use your data</h2>
+  <ul>
+    <li>To provide the Verdictra service — processing your documents, building the knowledge graph, and answering your queries.</li>
+    <li>To send you account-related emails: verification link, password reset, and service notifications. We do not send marketing emails without your explicit consent.</li>
+    <li>To enforce plan limits (case count, query count) as defined in your subscription tier.</li>
+  </ul>
+
+  <h2>4. What we never do</h2>
+  <ul>
+    <li>We never sell your data to any third party.</li>
+    <li>We never use your case files or query content to train AI models.</li>
+    <li>We never share your data with advertisers.</li>
+    <li>We never send your original documents outside our Bangalore server infrastructure.</li>
+  </ul>
+
+  <h2>5. Third-party services</h2>
+  <p>Verdictra uses the following third-party services:</p>
+  <ul>
+    <li><strong>OpenAI (GPT-4o):</strong> Receives the text of your queries and extracted entity information (not original documents) to generate answers. Subject to OpenAI's API privacy policy.</li>
+    <li><strong>SendGrid:</strong> Used to send transactional emails (verification, password reset). Receives only your email address for this purpose.</li>
+    <li><strong>DigitalOcean:</strong> Our cloud infrastructure provider in Bangalore. Your files reside on their servers under our exclusive control.</li>
+  </ul>
+
+  <h2>6. Data retention</h2>
+  <p>Your account data and case files are retained for as long as your account is active. If you delete a case, all associated files, graph nodes, and conversation history are permanently deleted within 24 hours. If you close your account, all data is deleted within 30 days.</p>
+
+  <h2>7. Security</h2>
+  <p>All data is transmitted over HTTPS. Passwords are stored using a secure hashing algorithm (argon2). Case files are isolated by user account — no user can access another user's cases. Our server infrastructure is maintained under strict access controls.</p>
+
+  <h2>8. DPDP Act 2023 compliance</h2>
+  <p>We process personal data in compliance with India's Digital Personal Data Protection Act, 2023. You have the right to:</p>
+  <ul>
+    <li>Access the personal data we hold about you</li>
+    <li>Request correction of inaccurate personal data</li>
+    <li>Request erasure of your personal data</li>
+    <li>Withdraw consent for processing at any time</li>
+    <li>Nominate another person to exercise these rights on your behalf</li>
+  </ul>
+  <p>To exercise any of these rights, email <a href="mailto:privacy@verdictra.ai">privacy@verdictra.ai</a>. We will respond within 30 days.</p>
+
+  <h2>9. Jurisdiction</h2>
+  <p>This policy is governed by the laws of India. Any disputes arising from your use of Verdictra shall be subject to the exclusive jurisdiction of courts in India.</p>
+
+  <h2>10. Changes to this policy</h2>
+  <p>We may update this policy from time to time. Material changes will be communicated by email to your registered address at least 14 days before they take effect. Continued use of the service after that date constitutes acceptance of the revised policy.</p>
+
+  <h2>11. Contact</h2>
+  <p>For any privacy-related questions or to exercise your rights under the DPDP Act, contact us at <a href="mailto:privacy@verdictra.ai">privacy@verdictra.ai</a>.</p>
+</div>
+
+<footer>
+  <p>© 2025 Verdictra. Built for Indian law. Grounded in evidence. Verified by you.</p>
+</footer>
+
+</body>
+</html>

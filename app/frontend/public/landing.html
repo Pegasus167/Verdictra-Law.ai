@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verdictra — Legal Intelligence for Indian Law</title>
+  <meta name="description" content="Upload your case bundle. Ask any question. Get a cited answer grounded in the exact page of your own documents." />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@400;600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .vl-root {
+      background: #fcf9f5;
+      color: #1c1c1a;
+      font-family: 'Manrope', sans-serif;
+      min-height: 100vh;
+    }
+
+    .vl-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      border-bottom: 1px solid #e5e2de;
+      background: #fcf9f5;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .vl-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .vl-logo-mark { width: 36px; height: 36px; }
+    .vl-logo-text { font-family: 'Noto Serif', serif; font-size: 18px; font-weight: 600; color: #17191b; letter-spacing: -0.01em; }
+    .vl-logo-sub { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #75777a; text-transform: uppercase; }
+
+    .vl-nav-links { display: flex; align-items: center; gap: 32px; }
+    .vl-nav-link { font-size: 14px; color: #44474a; text-decoration: none; font-weight: 400; }
+    .vl-nav-link:hover { color: #17191b; }
+
+    .vl-btn-primary {
+      background: #17191b; color: #fff;
+      font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 600;
+      padding: 10px 22px; border-radius: 4px; border: none; cursor: pointer;
+      letter-spacing: 0; transition: background 250ms ease; text-decoration: none; display: inline-block;
+    }
+    .vl-btn-primary:hover { background: #2c2e30; }
+
+    .vl-btn-outline {
+      background: transparent; color: #17191b;
+      font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 600;
+      padding: 10px 22px; border-radius: 4px; border: 1px solid #c5c6ca; cursor: pointer;
+      transition: border-color 250ms ease; text-decoration: none; display: inline-block;
+    }
+    .vl-btn-outline:hover { border-color: #75777a; }
+
+    .vl-hero { max-width: 860px; margin: 0 auto; padding: 96px 40px 80px; text-align: center; }
+    .vl-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6b5c4c; margin-bottom: 24px; }
+    .vl-hero-title { font-family: 'Noto Serif', serif; font-size: 48px; font-weight: 600; line-height: 1.15; letter-spacing: -0.02em; color: #17191b; margin-bottom: 24px; }
+    .vl-hero-title em { font-style: italic; color: #6b5c4c; }
+    .vl-hero-sub { font-size: 18px; line-height: 1.6; color: #44474a; max-width: 600px; margin: 0 auto 40px; font-weight: 400; }
+    .vl-hero-cta { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .vl-hero-note { font-size: 13px; color: #75777a; margin-top: 16px; }
+
+    /* Demo video embed */
+    .vl-demo-video {
+      max-width: 860px; margin: 0 auto 0; padding: 0 40px 80px;
+    }
+    .vl-video-wrapper {
+      position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;
+      border-radius: 8px; border: 1px solid #e5e2de; background: #f0ede9;
+    }
+    .vl-video-wrapper iframe {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+    }
+    .vl-video-placeholder {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+      cursor: pointer;
+    }
+    .vl-play-btn {
+      width: 64px; height: 64px; background: #17191b; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 250ms ease;
+    }
+    .vl-play-btn:hover { background: #2c2e30; }
+    .vl-video-label { font-size: 14px; color: #75777a; font-weight: 400; }
+
+    .vl-divider { height: 1px; background: #e5e2de; margin: 0 40px; }
+
+    .vl-stats { display: flex; justify-content: center; gap: 0; padding: 40px; border-bottom: 1px solid #e5e2de; }
+    .vl-stat { text-align: center; padding: 0 48px; border-right: 1px solid #e5e2de; }
+    .vl-stat:last-child { border-right: none; }
+    .vl-stat-num { font-family: 'Noto Serif', serif; font-size: 32px; font-weight: 600; color: #17191b; letter-spacing: -0.02em; }
+    .vl-stat-label { font-size: 13px; color: #75777a; margin-top: 4px; font-weight: 400; }
+
+    .vl-section { max-width: 1100px; margin: 0 auto; padding: 80px 40px; }
+    .vl-section-label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #75777a; margin-bottom: 12px; }
+    .vl-section-title { font-family: 'Noto Serif', serif; font-size: 32px; font-weight: 500; letter-spacing: -0.01em; color: #17191b; margin-bottom: 16px; line-height: 1.3; }
+    .vl-section-sub { font-size: 16px; color: #44474a; line-height: 1.6; max-width: 560px; margin-bottom: 56px; }
+
+    .vl-how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #e5e2de; border: 1px solid #e5e2de; border-radius: 8px; overflow: hidden; }
+    .vl-how-card { background: #fcf9f5; padding: 32px 28px; }
+    .vl-how-num { font-family: 'Noto Serif', serif; font-size: 13px; font-weight: 600; color: #c5c6ca; margin-bottom: 20px; letter-spacing: 0.04em; }
+    .vl-how-title { font-family: 'Noto Serif', serif; font-size: 18px; font-weight: 500; color: #17191b; margin-bottom: 12px; line-height: 1.3; }
+    .vl-how-body { font-size: 14px; color: #44474a; line-height: 1.6; }
+
+    .vl-features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .vl-feature { background: #f0ede9; border-radius: 8px; padding: 28px; }
+    .vl-feature-icon { width: 36px; height: 36px; background: #e5e2de; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .vl-feature-title { font-family: 'Noto Serif', serif; font-size: 16px; font-weight: 500; color: #17191b; margin-bottom: 8px; }
+    .vl-feature-body { font-size: 14px; color: #44474a; line-height: 1.6; }
+
+    .vl-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #e5e2de; border: 1px solid #e5e2de; border-radius: 8px; overflow: hidden; margin-top: 48px; }
+    .vl-compare-col { background: #fcf9f5; padding: 32px 28px; }
+    .vl-compare-col.accent { background: #17191b; }
+    .vl-compare-header { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #75777a; margin-bottom: 24px; }
+    .vl-compare-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; font-size: 14px; color: #44474a; line-height: 1.5; }
+    .vl-compare-col.accent .vl-compare-item { color: #c5c6ca; }
+    .vl-dot { width: 6px; height: 6px; border-radius: 50%; background: #c5c6ca; flex-shrink: 0; margin-top: 6px; }
+    .vl-dot.good-light { background: #f4dfcb; }
+
+    .vl-pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #e5e2de; border: 1px solid #e5e2de; border-radius: 8px; overflow: hidden; margin-top: 48px; }
+    .vl-price-card { background: #fcf9f5; padding: 32px 28px; }
+    .vl-price-card.featured { background: #17191b; }
+    .vl-price-tier { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #75777a; margin-bottom: 20px; }
+    .vl-price-amount { font-family: 'Noto Serif', serif; font-size: 36px; font-weight: 600; color: #17191b; letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px; }
+    .vl-price-card.featured .vl-price-amount { color: #f6f3ef; }
+    .vl-price-card.featured .vl-price-tier { color: #6b5c4c; }
+    .vl-price-period { font-size: 13px; color: #75777a; margin-bottom: 28px; }
+    .vl-price-card.featured .vl-price-period { color: #44474a; }
+    .vl-price-feature { font-size: 13px; color: #44474a; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .vl-price-card.featured .vl-price-feature { color: #949598; }
+    .vl-check { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .vl-testimonial-section { background: #f0ede9; border-top: 1px solid #e5e2de; border-bottom: 1px solid #e5e2de; padding: 80px 40px; }
+    .vl-testimonial { max-width: 680px; margin: 0 auto; text-align: center; }
+    .vl-quote { font-family: 'Noto Serif', serif; font-size: 22px; font-weight: 400; color: #17191b; line-height: 1.5; font-style: italic; margin-bottom: 24px; }
+    .vl-quote-attr { font-size: 13px; color: #75777a; font-weight: 400; }
+
+    .vl-cta-section { background: #17191b; padding: 96px 40px; text-align: center; }
+    .vl-cta-title { font-family: 'Noto Serif', serif; font-size: 40px; font-weight: 600; color: #fcf9f5; letter-spacing: -0.02em; margin-bottom: 16px; line-height: 1.2; }
+    .vl-cta-sub { font-size: 16px; color: #75777a; margin-bottom: 40px; line-height: 1.6; }
+    .vl-btn-cream { background: #fcf9f5; color: #17191b; font-family: 'Manrope', sans-serif; font-size: 15px; font-weight: 600; padding: 14px 32px; border-radius: 4px; border: none; cursor: pointer; transition: background 250ms ease; text-decoration: none; display: inline-block; }
+    .vl-btn-cream:hover { background: #f0ede9; }
+
+    .vl-footer { padding: 40px; border-top: 1px solid #e5e2de; display: flex; align-items: center; justify-content: space-between; }
+    .vl-footer-note { font-size: 13px; color: #75777a; }
+
+    .vl-badge { display: inline-block; background: #f4dfcb; color: #6b5c4c; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; margin-bottom: 20px; }
+
+    @media (max-width: 768px) {
+      .vl-nav { padding: 16px 20px; }
+      .vl-nav-links { gap: 12px; }
+      .vl-nav-link { display: none; }
+      .vl-hero { padding: 60px 20px 48px; }
+      .vl-hero-title { font-size: 32px; }
+      .vl-hero-sub { font-size: 16px; }
+      .vl-stats { flex-wrap: wrap; padding: 24px 20px; }
+      .vl-stat { padding: 16px 24px; border-right: none; border-bottom: 1px solid #e5e2de; width: 50%; }
+      .vl-section { padding: 48px 20px; }
+      .vl-how-grid { grid-template-columns: 1fr; }
+      .vl-features { grid-template-columns: 1fr; }
+      .vl-compare { grid-template-columns: 1fr; }
+      .vl-pricing { grid-template-columns: 1fr; }
+      .vl-footer { flex-direction: column; gap: 16px; text-align: center; padding: 32px 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="vl-root">
+
+  <nav class="vl-nav">
+    <a href="/" class="vl-logo">
+      <svg class="vl-logo-mark" viewBox="0 0 36 36" fill="none">
+        <text x="2" y="28" font-family="serif" font-size="32" font-weight="700" fill="#17191b">V</text>
+        <line x1="18" y1="6" x2="18" y2="10" stroke="#b8860b" stroke-width="1.5"/>
+        <circle cx="18" cy="11" r="2" fill="none" stroke="#b8860b" stroke-width="1.5"/>
+        <line x1="18" y1="13" x2="10" y2="18" stroke="#b8860b" stroke-width="1.5"/>
+        <line x1="18" y1="13" x2="26" y2="18" stroke="#b8860b" stroke-width="1.5"/>
+        <path d="M7 18 Q10 22 13 18" fill="none" stroke="#b8860b" stroke-width="1.5"/>
+        <path d="M23 18 Q26 22 29 18" fill="none" stroke="#b8860b" stroke-width="1.5"/>
+      </svg>
+      <div>
+        <div class="vl-logo-text">Verdictra</div>
+        <div class="vl-logo-sub">Legal Intelligence</div>
+      </div>
+    </a>
+    <div class="vl-nav-links">
+      <a href="#how-it-works" class="vl-nav-link">How it works</a>
+      <a href="#pricing" class="vl-nav-link">Pricing</a>
+      <a href="#pricing" class="vl-nav-link">For firms</a>
+      <a href="/app/login" class="vl-btn-outline" style="margin-left:8px;">Sign in</a>
+      <a href="/app/signup" class="vl-btn-primary">Request access</a>
+    </div>
+  </nav>
+
+  <section class="vl-hero">
+    <div class="vl-eyebrow">Built for Indian Litigation</div>
+    <h1 class="vl-hero-title">
+      Understand any case<br>in <em>15 minutes.</em>
+    </h1>
+    <p class="vl-hero-sub">
+      Upload your case bundle. Ask any question. Get a cited answer grounded in the exact page of your own documents — not a guess.
+    </p>
+    <div class="vl-hero-cta">
+      <a href="/app/signup" class="vl-btn-primary" style="padding:14px 32px;font-size:15px;">Request early access</a>
+      <a href="#demo" class="vl-btn-outline" style="padding:14px 32px;font-size:15px;">See a demo</a>
+    </div>
+    <p class="vl-hero-note">Free pilot for the first 5 firms. No contract. No commitment.</p>
+  </section>
+
+  <!-- Demo Video -->
+  <div class="vl-demo-video" id="demo">
+    <div class="vl-video-wrapper">
+      <!--
+        DEPLOYMENT NOTE:
+        Option A — YouTube embed (zero storage):
+          Replace the placeholder div below with:
+          <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID?rel=0&modestbranding=1"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen></iframe>
+
+        Option B — Self-hosted (place video at /opt/verdictra/landing/demo.mp4):
+          Replace with:
+          <video controls style="position:absolute;top:0;left:0;width:100%;height:100%;">
+            <source src="/demo.mp4" type="video/mp4">
+          </video>
+      -->
+      <div class="vl-video-placeholder" onclick="this.innerHTML='<video controls autoplay style=\'position:absolute;top:0;left:0;width:100%;height:100%;\'><source src=\'/demo.mp4\' type=\'video/mp4\'></video>'">
+        <div class="vl-play-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M7 5l9 5-9 5V5z" fill="#fcf9f5"/>
+          </svg>
+        </div>
+        <span class="vl-video-label">Watch the 3-minute demo</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="vl-stats">
+    <div class="vl-stat">
+      <div class="vl-stat-num">15 min</div>
+      <div class="vl-stat-label">Full case comprehension</div>
+    </div>
+    <div class="vl-stat">
+      <div class="vl-stat-num">&lt;30 sec</div>
+      <div class="vl-stat-label">Answer to any factual query</div>
+    </div>
+    <div class="vl-stat">
+      <div class="vl-stat-num">62×</div>
+      <div class="vl-stat-label">Return on subscription cost</div>
+    </div>
+    <div class="vl-stat">
+      <div class="vl-stat-num">100%</div>
+      <div class="vl-stat-label">Every answer page-cited</div>
+    </div>
+  </div>
+
+  <section class="vl-section" id="how-it-works">
+    <div class="vl-section-label">How it works</div>
+    <h2 class="vl-section-title">From bundle to briefed<br>in four steps</h2>
+    <p class="vl-section-sub">No training. No configuration. Upload once — query forever.</p>
+    <div class="vl-how-grid">
+      <div class="vl-how-card">
+        <div class="vl-how-num">01</div>
+        <div class="vl-how-title">Upload your case bundle</div>
+        <p class="vl-how-body">PDF, DOCX, scanned orders, emails — any format. One upload covers the entire matter, however many documents.</p>
+      </div>
+      <div class="vl-how-card">
+        <div class="vl-how-num">02</div>
+        <div class="vl-how-title">Review what was found</div>
+        <p class="vl-how-body">Every party, date, amount, and order is extracted and shown to you with a clickable page citation. You verify before anything is committed.</p>
+      </div>
+      <div class="vl-how-card">
+        <div class="vl-how-num">03</div>
+        <div class="vl-how-title">Ask any question</div>
+        <p class="vl-how-body">"What did the court direct on 15 January?" "Is there a connection between the borrower and the auction purchaser?" Answered in under 30 seconds.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="vl-divider"></div>
+
+  <section class="vl-section">
+    <div class="vl-section-label">Why Verdictra</div>
+    <h2 class="vl-section-title">Every answer you can verify.<br>Every source you can check.</h2>
+    <p class="vl-section-sub">In a profession that runs on evidence, AI that cannot show its work is a liability. Verdictra shows every claim to its source page.</p>
+    <div class="vl-features">
+      <div class="vl-feature">
+        <div class="vl-feature-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="7" stroke="#6b5c4c" stroke-width="1.5"/>
+            <path d="M6 9l2 2 4-4" stroke="#6b5c4c" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="vl-feature-title">Page-cited answers</div>
+        <p class="vl-feature-body">Every factual claim includes the exact page number in the source PDF. Click to open the document at that location and verify yourself.</p>
+      </div>
+      <div class="vl-feature">
+        <div class="vl-feature-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="3" y="3" width="5" height="5" rx="1" stroke="#6b5c4c" stroke-width="1.5"/>
+            <rect x="10" y="3" width="5" height="5" rx="1" stroke="#6b5c4c" stroke-width="1.5"/>
+            <rect x="3" y="10" width="5" height="5" rx="1" stroke="#6b5c4c" stroke-width="1.5"/>
+            <rect x="10" y="10" width="5" height="5" rx="1" stroke="#6b5c4c" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="vl-feature-title">Knowledge graph — not keyword search</div>
+        <p class="vl-feature-body">"MIDC", "Maharashtra Industrial Development Corporation", and "the Authority" are recognised as the same party across all 220 pages.</p>
+      </div>
+      <div class="vl-feature">
+        <div class="vl-feature-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 2v4M9 12v4M2 9h4M12 9h4" stroke="#6b5c4c" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="9" cy="9" r="3" stroke="#6b5c4c" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="vl-feature-title">Deep Research in 60 seconds</div>
+        <p class="vl-feature-body">One click generates a structured 9-section analysis of the full matter — parties, timeline, court orders, financial terms, risk assessment.</p>
+      </div>
+      <div class="vl-feature">
+        <div class="vl-feature-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="2" y="4" width="14" height="10" rx="2" stroke="#6b5c4c" stroke-width="1.5"/>
+            <path d="M5 8h8M5 11h5" stroke="#6b5c4c" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="vl-feature-title">Your documents stay on your server</div>
+        <p class="vl-feature-body">Original case files are never sent to any third party. Each lawyer sees only their own matters. Client confidentiality by architecture.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="vl-divider"></div>
+
+  <section class="vl-section">
+    <div class="vl-section-label">Comparison</div>
+    <h2 class="vl-section-title">Not ChatGPT.<br>Not another summary tool.</h2>
+    <div class="vl-compare">
+      <div class="vl-compare-col">
+        <div class="vl-compare-header">General AI tools</div>
+        <div class="vl-compare-item"><div class="vl-dot"></div>No page citations — trust blindly or re-read the document</div>
+        <div class="vl-compare-item"><div class="vl-dot"></div>Document size limits — large bundles get truncated</div>
+        <div class="vl-compare-item"><div class="vl-dot"></div>Hallucination risk — fabricates facts and cases</div>
+        <div class="vl-compare-item"><div class="vl-dot"></div>No entity resolution — misses that MIDC = the Authority</div>
+        <div class="vl-compare-item"><div class="vl-dot"></div>No relationship graph — cannot answer multi-hop questions</div>
+        <div class="vl-compare-item"><div class="vl-dot"></div>Client documents sent to third-party servers</div>
+      </div>
+      <div class="vl-compare-col accent">
+        <div class="vl-compare-header">Verdictra</div>
+        <div class="vl-compare-item"><div class="vl-dot good-light"></div>Every answer cites the exact source page — click to verify</div>
+        <div class="vl-compare-item"><div class="vl-dot good-light"></div>No size limits — processes the full bundle regardless of length</div>
+        <div class="vl-compare-item"><div class="vl-dot good-light"></div>Graph-grounded — answers derived from verified extracted facts</div>
+        <div class="vl-compare-item"><div class="vl-dot good-light"></div>Entity resolver unifies all name variants as one party</div>
+        <div class="vl-compare-item"><div class="vl-dot good-light"></div>3-hop graph traversal — finds indirect connections across the case</div>
+        <div class="vl-compare-item"><div class="vl-dot good-light"></div>Original files never leave your server</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="vl-testimonial-section">
+    <div class="vl-testimonial">
+      <p class="vl-quote">"The brief does not get shorter. The backlog does not shrink. The client does not wait. Verdictra gives your team the comprehension of a senior associate at the speed of a search engine."</p>
+      <div class="vl-quote-attr">— From the Verdictra pilot brief</div>
+    </div>
+  </section>
+
+  <section class="vl-section" id="pricing">
+    <div class="vl-section-label">Pricing</div>
+    <h2 class="vl-section-title">Costs less than one hour<br>of a senior associate.</h2>
+    <p class="vl-section-sub">Flat monthly fee. Unlimited queries. Every tier includes Deep Research.</p>
+    <div class="vl-pricing">
+      <div class="vl-price-card">
+        <div class="vl-price-tier">Starter</div>
+        <div class="vl-price-amount">₹9,999</div>
+        <div class="vl-price-period">per month · up to 10 cases · 1 user</div>
+        <div class="vl-price-feature">
+          <svg class="vl-check" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#6b5c4c" stroke-width="1.5" stroke-linecap="round"/></svg>
+          PDF, DOCX, email, image upload
+        </div>
+        <div class="vl-price-feature">
+          <svg class="vl-check" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#6b5c4c" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Knowledge graph + Deep Research
+        </div>
+        <div class="vl-price-feature">
+          <svg class="vl-check" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#6b5c4c" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Page-cited answers
+        </div>
+        <a href="/app/signup?plan=starter" class="vl-btn-outline" style="display:block;text-align:center;margin-top:24px;padding:12px;">Get started</a>
+      </div>
+      <div class="vl-price-card featured">
+        <div class="vl-badge">Most popular</div>
+        <div class="vl-price-tier">Professional</div>
+        <div class="vl-price-amount">₹29,999</div>
+        <div class="vl-price-period">per month · up to 50 cases · 5 users</div>
+        <div class="vl-price-feature">
+          <svg class="vl-check" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#f4dfcb" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Everything in Starter
+        </div>
+        <div class="vl-price-feature">
+          <svg class="vl-check" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#f4dfcb" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Assisted onboarding
+        </div>
+        <div class="vl-price-feature">
+          <svg class="vl-check" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#f4dfcb" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Multi-user case isolation
+        </div>
+        <a href="/app/signup?plan=professional" class="vl-btn-cream" style="display:block;text-align:center;margin-top:24px;padding:12px;">Get started</a>
+      </div>
+      <div class="vl-price-card">
+        <div class="vl-price-tier">Firm</div>
+        <div class="vl-price-amount">₹59,999</div>
+        <div class="vl-price-period">per month · unlimited cases · 15 users</div>
+        <div class="vl-price-feature">
+          <svg class="vl-check" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#6b5c4c" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Everything in Professional
+        </div>
+        <div class="vl-price-feature">
+          <svg class="vl-check" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#6b5c4c" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Dedicated support
+        </div>
+        <div class="vl-price-feature">
+          <svg class="vl-check" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#6b5c4c" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Custom domain deployment
+        </div>
+        <a href="mailto:support@verdictra.ai?subject=Firm%20plan%20enquiry" class="vl-btn-outline" style="display:block;text-align:center;margin-top:24px;padding:12px;">Contact us</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="vl-cta-section">
+    <h2 class="vl-cta-title">Start with a case<br>you already know.</h2>
+    <p class="vl-cta-sub">Upload a closed matter. Ask questions. Verify the answers against the PDF.<br>If it doesn't save your team measurable time — there's no reason to continue.</p>
+    <a href="/app/signup" class="vl-btn-cream">Request your free pilot</a>
+    <p style="font-size:13px;color:#44474a;margin-top:16px;">No contract. No credit card. 5 firms only.</p>
+  </section>
+
+  <footer class="vl-footer">
+    <a href="/" class="vl-logo" style="text-decoration:none;">
+      <div>
+        <div class="vl-logo-text" style="font-size:15px;">Verdictra</div>
+        <div class="vl-logo-sub">Legal Intelligence</div>
+      </div>
+    </a>
+    <div class="vl-footer-note">Built for Indian law. Grounded in evidence. Verified by you.</div>
+    <div style="display:flex;gap:24px;">
+      <a href="/privacy.html" style="font-size:13px;color:#75777a;text-decoration:none;">Privacy policy</a>
+      <a href="/terms.html" style="font-size:13px;color:#75777a;text-decoration:none;">Terms</a>
+      <a href="mailto:support@verdictra.ai" style="font-size:13px;color:#75777a;text-decoration:none;">Contact</a>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Scale, Loader2, AlertCircle } from 'lucide-react'
 
 const BASE = ''
@@ -33,6 +33,8 @@ export default function LoginPage() {
       localStorage.setItem('token', data.access_token)
       localStorage.setItem('user_name', data.name)
       localStorage.setItem('user_role', data.role)
+      localStorage.setItem('user_plan', data.plan || 'free')
+      if (data.first_login) localStorage.setItem('first_login', 'true')
       navigate('/')
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.')
@@ -74,7 +76,15 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs" style={{ color: 'var(--muted)' }}>Password</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs" style={{ color: 'var(--muted)' }}>Password</label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs"
+                  style={{ color: 'var(--accent2)', textDecoration: 'none' }}>
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 type="password"
                 value={password}
@@ -107,7 +117,14 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs mt-6" style={{ color: 'var(--muted)' }}>
+        <p className="text-center text-xs mt-5" style={{ color: 'var(--muted)' }}>
+          Don't have an account?{' '}
+          <Link to="/signup" style={{ color: 'var(--accent2)', textDecoration: 'none' }}>
+            Create one
+          </Link>
+        </p>
+
+        <p className="text-center text-xs mt-4" style={{ color: 'var(--muted)' }}>
           Verdictra — Legal Intelligence Platform
         </p>
       </div>
