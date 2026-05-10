@@ -125,8 +125,8 @@ export default function ReviewPage() {
       : (staged[String(i)]?.decision as SidebarItem['status']) ?? 'PENDING',
   }))
 
-  const stagedCount = Object.keys(staged).length + deletedGroups.size
-  const progress = total > 0 ? Math.round(stagedCount / total * 100) : 0
+  const decidedCount = Object.values(staged).filter(d => d.decision === 'MERGE' || d.decision === 'KEEP').length
+  const progress = total > 0 ? Math.round(decidedCount / total * 100) : 0
 
   // ── Bucket operations ────────────────────────────────────────────────────────
 
@@ -290,20 +290,20 @@ export default function ReviewPage() {
                 style={{ width: `${progress}%`, background: 'var(--accent)' }} />
             </div>
             <span className="text-xs" style={{ color: 'var(--muted)' }}>
-              {stagedCount}/{total}
+              {decidedCount}/{total}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs px-2.5 py-1.5 rounded-md"
             style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
-            {stagedCount} staged · {activeTotal} active
+            {decidedCount} decided · {activeTotal} active
           </span>
           <button
             onClick={confirmAll}
-            disabled={confirming || stagedCount === 0}
+            disabled={confirming || decidedCount < total}
             className="px-4 py-1.5 rounded-md text-xs font-bold transition-colors"
-            style={{ background: stagedCount === 0 ? 'var(--border2)' : 'var(--accent)', color: 'white' }}>
+            style={{ background: decidedCount < total ? 'var(--border2)' : 'var(--accent)', color: 'white' }}>
             {confirming ? 'Confirming...' : 'Confirm All Changes'}
           </button>
         </div>
