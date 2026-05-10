@@ -338,10 +338,10 @@ def migrate_env_users() -> None:
     init_db()
     legacy = [
         ("admin",   os.environ.get("ADMIN_PASSWORD", ""),   "admin",  "Admin User",     "admin"),
-        ("lawyer1", os.environ.get("LAWYER1_PASSWORD", ""), "lawyer", "Lawyer 1",       "free"),
-        ("shlok",   os.environ.get("LAWYER2_PASSWORD", ""), "lawyer", "Shlok",          "free"),
-        ("tapasya", os.environ.get("LAWYER3_PASSWORD", ""), "lawyer", "Tapasya",        "free"),
-        ("aditya",  os.environ.get("LAWYER4_PASSWORD", ""), "lawyer", "Aditya",         "free"),
+        ("lawyer1", os.environ.get("LAWYER1_PASSWORD", ""), "lawyer", "Lawyer 1",       "max"),
+        ("shlok",   os.environ.get("LAWYER2_PASSWORD", ""), "lawyer", "Shlok",          "max"),
+        ("tapasya", os.environ.get("LAWYER3_PASSWORD", ""), "lawyer", "Tapasya",        "max"),
+        ("aditya",  os.environ.get("LAWYER4_PASSWORD", ""), "lawyer", "Aditya",         "max"),
     ]
 
     for username, password, role, name, plan in legacy:

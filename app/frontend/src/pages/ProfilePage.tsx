@@ -51,7 +51,7 @@ export default function ProfilePage() {
 
   if (!profile) return null
 
-  const limit  = PLAN_LIMIT[profile.plan] ?? 2
+  const limit  = profile.role === 'admin' ? null : (PLAN_LIMIT[profile.plan] ?? 2)
   const pct    = limit ? Math.min(100, (caseCount / limit) * 100) : 0
   const joined = profile.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })
