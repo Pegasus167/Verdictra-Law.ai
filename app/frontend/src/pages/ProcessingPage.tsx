@@ -141,12 +141,12 @@ export default function ProcessingPage() {
               <div key={stage.num}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-xs transition-all"
                 style={{
-                  background: done   ? '#05261a'
-                             : active ? '#1a1f35'
+                  background: done   ? 'var(--surface2)'
+                             : active ? 'var(--surface)'
                              : 'var(--bg)',
                   border: `1px solid ${
-                    done   ? '#065f46'
-                  : active ? 'var(--accent)'
+                    done   ? 'var(--border2)'
+                  : active ? 'var(--accent2)'
                   : 'var(--border)'
                   }`,
                 }}>
@@ -159,7 +159,7 @@ export default function ProcessingPage() {
                 )}
                 <div className="flex-1 min-w-0">
                   <div style={{
-                    color: done ? '#10b981' : active ? 'var(--text)' : 'var(--muted)',
+                    color: done ? 'var(--green)' : active ? 'var(--text)' : 'var(--muted)',
                     fontWeight: active ? 600 : 400,
                   }}>
                     Stage {stage.num} — {stage.label}
@@ -176,7 +176,7 @@ export default function ProcessingPage() {
         </div>
 
         <div className="rounded-lg px-4 py-3 text-xs text-yellow-400"
-          style={{ background: '#1c100322', border: '1px solid #78350f' }}>
+          style={{ background: 'var(--surface2)', border: '1px solid var(--border2)', color: 'var(--yellow)' }}>
           You can close this tab and come back later. The pipeline continues
           running in the background.
         </div>
