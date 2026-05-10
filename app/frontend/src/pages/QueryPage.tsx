@@ -81,6 +81,30 @@ function SimpleMarkdown({ content }: { content: string }) {
   )
 }
 
+function TypingIndicator() {
+  return (
+    <div className="flex items-center gap-1 py-1">
+      {[0, 1, 2].map(i => (
+        <div
+          key={i}
+          style={{
+            width: 6, height: 6, borderRadius: '50%',
+            background: 'var(--muted2)',
+            animation: 'bounce 1.2s infinite',
+            animationDelay: `${i * 0.2}s`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes bounce {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+          30% { transform: translateY(-5px); opacity: 1; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
 export default function QueryPage() {
   const { caseId } = useParams<{ caseId: string }>()
   const navigate   = useNavigate()
@@ -485,9 +509,11 @@ export default function QueryPage() {
                       )}
 
                       {/* Content — formatted for deep research, plain for normal */}
-                      {msg.answer_type === 'DEEP_RESEARCH'
-                        ? <DeepResearchContent content={msg.content} />
-                        : <SimpleMarkdown content={msg.content} />
+                      {msg.content === ''
+                        ? <TypingIndicator />
+                        : msg.answer_type === 'DEEP_RESEARCH'
+                          ? <DeepResearchContent content={msg.content} />
+                          : <SimpleMarkdown content={msg.content} />
                       }
 
                       {msg.answer_type && (
