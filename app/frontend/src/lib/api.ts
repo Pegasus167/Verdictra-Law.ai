@@ -14,9 +14,8 @@ function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
 
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  // Merge with any existing headers, but don't override Austhorization
   const existingHeaders = (options.headers as Record<string, string>) ?? {}
-  const {'Content-Type': _, 'Authorization': __, ...otherHeaders} = existingHeaders
+  const { 'Content-Type': _, 'Authorization': __, ...otherHeaders } = existingHeaders
 
   return fetch(url, {
     ...options,
@@ -44,20 +43,19 @@ export const api = {
 
   async uploadCase(
     caseName: string,
-    files: File[],                    // ← was: file: File
+    files: File[],
     domain: string = 'constitutional',
-  ): Promise<{ case_id: string; doc_count: number; documents: Array<{doc_id: string; filename: string}> }> {
+  ): Promise<{ case_id: string; doc_count: number; documents: Array<{ doc_id: string; filename: string }> }> {
     const form = new FormData()
     form.append('case_name', caseName)
     form.append('domain', domain)
-    // Append each file under the same field name 'pdf_files'
     for (const file of files) {
       form.append('pdf_files', file)
     }
     const res = await authFetch(`${BASE}/upload`, { method: 'POST', body: form })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.error || 'Upload failed')
+      throw new Error(err.detail || err.error || 'Upload failed')
     }
     return res.json()
   },
@@ -119,6 +117,41 @@ export const api = {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.error || 'Delete failed')
     }
+  },
+
+  // ── Law Research sessions ──────────────────────────────────────────────────
+
+  async getLawSessions(): Promise<Array<{ id: string; name: string; updated_at: string }>> {
+    const res = await authFetch(`${BASE}/law-research/sessions`)
+    if (!res.ok) return []
+    return res.json()
+  },
+
+  async createLawSession(): Promise<{ id: string; name: string; updated_at: string }> {
+    const res = await authFetch(`${BASE}/law-research/sessions`, { method: 'POST' })
+    if (!res.ok) throw new Error('Failed to create session')
+    return res.json()
+  },
+
+  async getLawSession(sessionId: string): Promise<{
+    id: string; name: string; messages: Array<{ role: string; content: string }>
+  }> {
+    const res = await authFetch(`${BASE}/law-research/sessions/${sessionId}`)
+    if (!res.ok) throw new Error('Session not found')
+    return res.json()
+  },
+
+  async renameLawSession(sessionId: string, name: string): Promise<void> {
+    const res = await authFetch(`${BASE}/law-research/sessions/${sessionId}/name`, {
+      method: 'PUT',
+      body: JSON.stringify({ name }),
+    })
+    if (!res.ok) throw new Error('Failed to rename session')
+  },
+
+  async deleteLawSession(sessionId: string): Promise<void> {
+    const res = await authFetch(`${BASE}/law-research/sessions/${sessionId}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error('Failed to delete session')
   },
 }
 
