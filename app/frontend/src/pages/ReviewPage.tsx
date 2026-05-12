@@ -412,7 +412,7 @@ export default function ReviewPage() {
             style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs tracking-widest uppercase" style={{ color: 'var(--muted)' }}>
-                Canonical name buckets
+                Confirm Name
               </span>
               <div className="flex items-center gap-2">
                 <button onClick={removeBucket}
@@ -435,7 +435,7 @@ export default function ReviewPage() {
                   <input
                     value={name}
                     onChange={e => setBucketName(i, e.target.value)}
-                    placeholder={`Canonical name ${i + 1}...`}
+                    placeholder={`Enter confirmed name ${i + 1}...`}
                     className="flex-1 rounded-md px-2.5 py-1.5 text-xs outline-none"
                     style={{ background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--text)' }}
                   />
@@ -519,7 +519,7 @@ export default function ReviewPage() {
                       <option value="none">— none —</option>
                       {ui.bucketNames.map((name, bi) => (
                         <option key={bi} value={String(bi)}>
-                          {name.trim() || `Canonical ${bi + 1}`}
+                          {name.trim() || `Confirmed Name ${bi + 1}`}
                         </option>
                       ))}
                     </select>
