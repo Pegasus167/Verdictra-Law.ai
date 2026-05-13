@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Upload, Scale, Clock, AlertCircle, Loader2, Trash2, User } from 'lucide-react'
+import { Upload, Scale, Clock, AlertCircle, Loader2, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { formatDate } from '../lib/utils'
 import type { Case } from '../types'
@@ -118,24 +118,6 @@ export default function CasesPage() {
           <span className="font-bold tracking-wider text-sm"
             style={{ color: 'var(--accent)', fontFamily: 'Noto Serif, serif' }}>Verdictra</span>
           <span className="text-sm" style={{ color: 'var(--muted)' }}>Legal Intelligence</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs" style={{ color: 'var(--muted)' }}>
-            {localStorage.getItem('user_name') || ''}
-          </span>
-          <button
-            onClick={() => navigate('/profile')}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded"
-            style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)' }}
-            title="Profile & plan">
-            <User size={12} /> Profile
-          </button>
-          <button
-            onClick={() => { localStorage.clear(); navigate('/login') }}
-            className="text-xs px-3 py-1.5 rounded"
-            style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)' }}>
-            Sign out
-          </button>
         </div>
       </header>
 
