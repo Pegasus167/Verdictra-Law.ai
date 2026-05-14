@@ -46,6 +46,9 @@ PDF Upload
 ├── validator.py             SHACL validation via pyshacl + shapes.ttl + ontology.ttl
 ├── relationship_extractor.py  Async GPT-4o-mini · typed relationships only · confidence ≥ 0.70
 ├── graph_builder.py         Neo4j MERGE · (canonicalName, case_id) IS NODE KEY
+├── document_registry.py     Multi-file upload tracking · doc_id · document_date
+├── extractors/              File type router · PDF · DOCX · email · image · TXT
+├── entity_management.py     Confirmed entity registry · incremental resolution
 ├── entity_resolver.py       sentence-transformers clustering · LLM scoring · AUTO/REVIEW/KEEP
 └── kge_trainer.py           PyKEEN RotatE · 100 epochs · 128-dim FAISS index
 ```
@@ -88,8 +91,8 @@ Query
   └── GAR Fusion        NodeScore = (1/√(N+1)) × Σ(chunk_scores) · confidence routing
 ```
 
-**Fast path:** 3+ HIGH confidence nodes → direct answer  
-**Multi-hop:** up to 3 iterations when context is insufficient  
+**Fast path:** 5+ HIGH confidence nodes, FACT queries only → direct answer
+**Multi-hop:** COMPLEX and RELATIONSHIP queries always run sufficiency check + up to 3 hops. FACT queries skip to answer when confidence is high.
 **Deep Research:** full graph retrieval (top_k=50) + 9-section structured report
 
 ---
@@ -169,12 +172,21 @@ LAW.ai/
 │   ├── graph_builder.py         Neo4j write layer (case_id partitioned)
 │   ├── entity_resolver.py       Clustering + LLM scoring + resolution state
 │   ├── kge_trainer.py           PyKEEN RotatE + FAISS index
-│   └── domains/
-│       ├── registry.py          Domain config loader
-│       ├── universal.json
-│       ├── constitutional.json
-│       ├── banking_finance.json
-│       └── ...
+│   ├── document_registry.py
+│   ├── entity_management.py
+│   ├── domains/
+│   │   ├── registry.py          Domain config loader
+│   │   ├── universal.json
+│   │   ├── constitutional.json
+│   │   ├── banking_finance.json
+│   │   └── ...
+│   └── extractors/
+│       ├── router.py
+│       ├── pdf_extractor.py
+│       ├── docx_extractor.py
+│       ├── email_extractor.py
+│       ├── image_extractor.py
+│       └── txt_extractor.py
 ├── retrieval/
 │   ├── graph_retriever.py       Cypher + KGE/FAISS retrieval
 │   ├── tree_retriever.py        BM25 passage retrieval
@@ -192,7 +204,12 @@ LAW.ai/
 │       │   ├── SummaryPage.tsx
 │       │   ├── ReviewPage.tsx
 │       │   ├── QueryPage.tsx
-│       │   └── LoginPage.tsx
+│       │   ├── LoginPage.tsx
+│       │   ├── SignupPage.tsx
+│       │   ├── VerifyEmailPage.tsx
+│       │   ├── PasswordPages.tsx
+│       │   ├── ProfilePage.tsx
+│       │   └── WelcomePage.tsx
 │       ├── lib/api.ts            Auth-wrapped API client
 │       └── App.tsx               Router + auth guard
 ├── ontology.ttl                  RDF/OWL entity class definitions
@@ -228,6 +245,14 @@ LAW.ai/
 | `GET` | `/pdf/{case_id}/{filename}` | — | Serve PDF file |
 | `GET` | `/domains` | — | Available domain configurations |
 | `GET/POST/DELETE` | `/annotations/{case_id}` | — | Post-it annotations |
+| `POST` | `/auth/signup` | — | Self-service registration |
+| `POST` | `/auth/verify-email` | — | Email verification |
+| `POST` | `/auth/forgot-password` | — | Password reset request |
+| `POST` | `/auth/reset-password` | — | Password reset confirm |
+| `GET/PUT` | `/auth/profile` | ✓ | User profile |
+| `POST` | `/cases/{case_id}/documents` | ✓ | Add documents to existing case |
+| `GET` | `/kge-status/{case_id}` | ✓ | KGE training status |
+| `GET` | `/conversation/{case_id}` | ✓ | Conversation history |
 
 ---
 
@@ -247,15 +272,21 @@ LAW.ai/
 | JWT auth + case ownership | ✅ Working |
 | Delete case + retry ingestion | ✅ Working |
 | Docker deployment (DO BLR1) | ✅ Live at 168.144.86.77 |
+| Multi-file upload (PDF/DOCX/email/image/TXT) | ✅ Working |
+| Document date extraction + provenance | ✅ Working |
+| Phase 3 incremental entity resolution | ✅ Working |
+| Light theme (Noto Serif + Manrope + warm cream) | ✅ Working |
+| Timeline reconstruction endpoint | ✅ Working |
 | HTTPS / Let's Encrypt | ⏳ Pending domain purchase |
 | Rate limiting | ⏳ Pending |
 | PDF upload size limit (50MB) | ⏳ Pending |
 | Neo4j upgrade (Free → Professional) | ⏳ Pending |
 | Proper password hashing (argon2) | ⏳ Pending |
-| MongoDB migration (JSON → DB) | 🔜 Planned |
-| Timeline reconstruction endpoint | 🔜 Planned |
-| Cross-case intelligence | 🔜 Planned |
+| MongoDB migration (JSON → DB) | ⏳ Pending |
+| Cross-case intelligence | ⏳ Pending |
 | GLiNER fine-tune on Indian legal data | 🔜 Planned |
+| Self-service signup + email verification | 🔜 In progress |
+| Law Research mode (Indian legal LLM) | 🔜 Planned |
 
 ---
 
@@ -266,6 +297,8 @@ LAW.ai/
 **Neo4j AuraDB Free tier** — 200k node / 400k relationship limit. Sleeps after inactivity. Upgrade to Professional before onboarding more than 3–4 firms.
 
 **FAISS dimension mismatch** — If you see `assert d == self.d` in logs, the FAISS index was built with a different model. Delete `cases/{case_id}/embeddings/` and run KGE training again. The index must be built and queried in the same 128-dim KGE space — not sentence-transformer space (384-dim).
+
+**Neo4j property warnings on pre-Phase-4 cases** — Cases ingested before Phase 4 deployment will generate `UnknownPropertyKeyWarning` for `documentDate` and `docUploadOrder`. These are warnings not errors — queries still return correct results. Re-ingest the case to stamp all relationships with provenance data.
 
 ---
 
@@ -286,6 +319,10 @@ git pull && docker compose build backend && docker compose up -d
 docker compose logs backend -f
 docker compose ps
 curl http://localhost:8000/health
+
+# Once DNS is live
+# curl https://verdictra.ai/health
+
 ```
 
 ---
