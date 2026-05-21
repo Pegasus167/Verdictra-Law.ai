@@ -106,7 +106,7 @@ def _base_template(body_html: str) -> str:
 
 
 def send_verification_email(to_email: str, name: str, token: str) -> bool:
-    verify_url = f"{APP_BASE_URL}/app/verify?token={token}"
+    verify_url = f"{APP_BASE_URL}/verify?token={token}"
     body = f"""
       <p>Hi {name},</p>
       <p>Thanks for signing up for Verdictra. Click the button below to verify your email address and activate your account.</p>
