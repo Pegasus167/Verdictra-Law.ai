@@ -38,6 +38,7 @@ export default function ReviewPage() {
   const [reviewNote, setReviewNote] = useState('')
   const [reviewNoteOpen, setReviewNoteOpen] = useState(false)
   const [reviewNotes, setReviewNotes] = useState<{id: string, page: number, text: string}[]>([])
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   // Per-group UI state — stored in a ref so it survives re-renders
   // and navigation within the same component mount
@@ -125,7 +126,7 @@ export default function ReviewPage() {
       : (staged[String(i)]?.decision as SidebarItem['status']) ?? 'PENDING',
   }))
 
-  const decidedCount = Object.values(staged).filter(d => d.decision === 'MERGE' || d.decision === 'KEEP').length
+  const decidedCount = Object.values(staged).filter(d => d.decision === 'MERGE' || d.decision === 'KEEP').length + deletedGroups.size
   const progress = total > 0 ? Math.round(decidedCount / total * 100) : 0
 
   // ── Bucket operations ────────────────────────────────────────────────────────
@@ -181,26 +182,32 @@ export default function ReviewPage() {
 
   // ── Group deletion ───────────────────────────────────────────────────────────
 
-  async function deleteGroup() {
-    if (!caseId || !group) return
-    // Stage as SKIP then mark deleted
-    await api.stageDecision(caseId, currentIdx, group.group_id, 'SKIP', {})
-    const newStaged = {
-      ...staged,
-      [String(currentIdx)]: {
-        group_id: group.group_id,
-        decision: 'SKIP' as const,
-        buckets: {},
-        staged_at: new Date().toISOString(),
-      }
+async function deleteGroup() {
+  if (!caseId || !group) return
+  setDeleteConfirmOpen(true)
+}
+
+async function confirmDeleteGroup() {
+  if (!caseId || !group) return
+  setDeleteConfirmOpen(false)
+  // Stage as SKIP then mark deleted
+  await api.stageDecision(caseId, currentIdx, group.group_id, 'SKIP', {})
+  const newStaged = {
+    ...staged,
+    [String(currentIdx)]: {
+      group_id: group.group_id,
+      decision: 'SKIP' as const,
+      buckets: {},
+      staged_at: new Date().toISOString(),
     }
-    setStaged(newStaged)
-    const newDeleted = new Set([...deletedGroups, currentIdx])
-    setDeletedGroups(newDeleted)
-    localStorage.setItem(`law_ai_deleted_${caseId}`, JSON.stringify(Array.from(newDeleted)))
-    // Advance to next non-deleted group
-    if (currentIdx < total - 1) setCurrentIdx(i => i + 1)
   }
+  setStaged(newStaged)
+  const newDeleted = new Set([...deletedGroups, currentIdx])
+  setDeletedGroups(newDeleted)
+  localStorage.setItem(`law_ai_deleted_${caseId}`, JSON.stringify(Array.from(newDeleted)))
+  // Advance to next non-deleted group
+  if (currentIdx < total - 1) setCurrentIdx(i => i + 1)
+}
 
   // ── Build buckets for staging ────────────────────────────────────────────────
 
@@ -669,6 +676,38 @@ export default function ReviewPage() {
           </div>
         )}
       </div>
+      {deleteConfirmOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 50,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div className="rounded-xl p-8 text-center" style={{
+            background: 'var(--surface)', border: '1px solid var(--border2)',
+            maxWidth: 400, width: '100%', margin: 20,
+          }}>
+            <h2 className="text-base font-bold mb-2">Delete this group?</h2>
+            <p className="text-sm mb-6" style={{ color: 'var(--muted)' }}>
+              This group and all its candidates will be removed from the review.
+              This counts as a decision and cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={confirmDeleteGroup}
+                className="px-5 py-2 rounded-lg text-xs font-bold"
+                style={{ background: 'var(--red)', color: 'white', border: 'none', cursor: 'pointer' }}>
+                Yes, delete group
+              </button>
+              <button
+                onClick={() => setDeleteConfirmOpen(false)}
+                className="px-5 py-2 rounded-lg text-xs"
+                style={{ background: 'var(--surface2)', color: 'var(--muted2)', border: '1px solid var(--border2)', cursor: 'pointer' }}>
+                Go back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
