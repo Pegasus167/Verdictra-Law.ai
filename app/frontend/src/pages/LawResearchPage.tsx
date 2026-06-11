@@ -146,7 +146,11 @@ export default function LawResearchPage() {
         const session = await api.createLawSession()
         activeSessionId = session.id
         navigate(`/law-research/${session.id}`, { replace: true })
-      } catch { return }
+      } catch {
+        setMessages(prev => prev.filter(m => m.id !== assistantId))
+        setStreaming(false)
+        return
+      }
     }
 
     setInput('')

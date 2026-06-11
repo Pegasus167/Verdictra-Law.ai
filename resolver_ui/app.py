@@ -42,6 +42,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from fastapi.security import HTTPBearer
+from resolver_ui.law_research import router as law_research_router, init_law_research_tables
 
 from config import settings
 
@@ -60,6 +61,7 @@ app = FastAPI(title="LAW.ai")
 from resolver_ui.auth import require_auth, router as auth_router, startup_auth, check_case_limit
 from fastapi import Depends
 app.include_router(auth_router)
+app.include_router(law_research_router)
 templates = Jinja2Templates(directory="resolver_ui/templates")
 
 # ── CHANGE 2: added server IP to CORS origins ─────────────────────────────────
@@ -82,6 +84,7 @@ app.add_middleware(
 async def on_startup():
     # ── CHANGE 3: initialises SQLite user DB and migrates pilot users ──────────
     startup_auth()
+    init_law_research_tables()
     settings.ensure_dirs()
     for case_dir in settings.cases_dir.iterdir():
         if case_dir.is_dir():
