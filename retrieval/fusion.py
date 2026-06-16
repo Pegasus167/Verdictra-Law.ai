@@ -15,6 +15,7 @@ Fusion logic:
 
 from __future__ import annotations
 
+from hmac import new
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
@@ -326,6 +327,65 @@ class FusionEngine:
 
         return fused_ctx
     
+    def merge(self, old: FusedContext, new: FusedContext) -> FusedContext:
+        """
+        Merge a newly expanded result into the existing accumulated context.
+        Without this, each multi-hop expansion discards everything found
+        in earlier hops instead of building on it.
+        """
+        merged_map: dict[str, FusedResult] = {r.entity_name: r for r in old.results}
+
+        for result in new.results:
+            if result.entity_name in merged_map:
+                existing = merged_map[result.entity_name]
+                existing.graph_node  = existing.graph_node or result.graph_node
+                existing.graph_score = max(existing.graph_score, result.graph_score)
+                existing.tree_passages.extend(result.tree_passages)
+                existing.tree_score   = max(existing.tree_score, result.tree_score)
+                existing.citations.extend(c for c in result.citations if c not in existing.citations)
+                has_graph = existing.graph_node is not None
+                has_tree  = len(existing.tree_passages) > 0
+                existing.confidence_level = (
+                    ConfidenceLevel.HIGH if has_graph and has_tree
+                    else ConfidenceLevel.MEDIUM if has_graph or has_tree
+                    else ConfidenceLevel.LOW
+                )
+                existing.final_score = (
+                    self.graph_weight * existing.graph_score
+                    + self.tree_weight * existing.tree_score
+                )
+            else:
+                merged_map[result.entity_name] = result
+
+        confidence_order = {ConfidenceLevel.HIGH: 0, ConfidenceLevel.MEDIUM: 1, ConfidenceLevel.LOW: 2}
+        merged_results = sorted(merged_map.values(), key=lambda r: (confidence_order[r.confidence_level], -r.final_score))
+
+        seen, merged_triples = set(), []
+        for t in old.subgraph_triples + new.subgraph_triples:
+            key = (t[0], t[1], t[2])
+            if key not in seen:
+                seen.add(key)
+                merged_triples.append(t)
+
+        seen_gar, merged_gar = set(), []
+        for g in old.gar_triples + new.gar_triples:
+            key = (g[0], g[1], g[2])
+            if key not in seen_gar:
+                seen_gar.add(key)
+                merged_gar.append(g)
+
+        typed_count = sum(1 for t in merged_triples if _relation_strength(t[1]) == "typed")
+
+        return FusedContext(
+            query=old.query,
+            results=merged_results,
+            subgraph_triples=merged_triples,
+            high_confidence_count=sum(1 for r in merged_results if r.confidence_level == ConfidenceLevel.HIGH),
+            medium_confidence_count=sum(1 for r in merged_results if r.confidence_level == ConfidenceLevel.MEDIUM),
+            typed_triple_count=typed_count,
+            weak_triple_count=len(merged_triples) - typed_count,
+            gar_triples=merged_gar,
+        )
     def _run_gar(
         self,
         tree_results: list[TreeSearchResult],

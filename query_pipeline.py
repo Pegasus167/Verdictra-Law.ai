@@ -146,7 +146,7 @@ class QueryPipeline:
 
         if classification.query_type in (QueryType.RELATIONSHIP, QueryType.COMPLEX):
             logger.info("  Running graph path (Cypher-first)...")
-            graph_result = self.graph_retriever.search(question, top_k=30 if classification.query_type == QueryType.COMPLEX else 20)
+            graph_result = self.graph_retriever.search(question, query_type=classification.query_type.value)
             path_used = "Cypher+KGE" if graph_result.escalated_to_kge else "Cypher"
             logger.info(
                 f"  Graph ({path_used}): {len(graph_result.nodes)} nodes, "
@@ -155,8 +155,9 @@ class QueryPipeline:
 
         if classification.query_type in (QueryType.FACT, QueryType.COMPLEX):
             logger.info("  Running tree path (BM25)...")
-            tree_results = self.tree_retriever.search(question, top_k=10)
-            logger.info(f"  Tree: {len(tree_results)} passages")
+            from retrieval.graph_retriever import TOP_K_BY_QUERY_TYPE, DEFAULT_TOP_K
+            passages_k = TOP_K_BY_QUERY_TYPE.get(classification.query_type.value, DEFAULT_TOP_K)["passages"]
+            tree_results = self.tree_retriever.search(question, top_k=passages_k)
 
         # ── Step 3: Fuse ──────────────────────────────────────────────────────
         logger.info("  Fusing results...")

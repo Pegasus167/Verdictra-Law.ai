@@ -56,6 +56,13 @@ ENTITY_MAP_PATH  = Path("data/embeddings/entity_map.pkl")
 DEFAULT_HOPS = 2
 MAX_SEEDS    = 5
 
+HOPS_BY_QUERY_TYPE = {
+    "FACT":          1,
+    "RELATIONSHIP":  2,
+    "COMPLEX":       3,
+    "DEEP_RESEARCH": 3,
+}
+
 # ── Sufficiency thresholds ─────────────────────────────────────────────────────
 MIN_NODES            = 5
 MIN_CONFIDENT_NODES  = 2
@@ -300,10 +307,12 @@ class GraphRetriever:
         query: str,
         top_k: int = None,
         entity_filter: list[str] = None,
-        hops: int = DEFAULT_HOPS,
+        hops: int = None,
+        query_type: str = "FACT",
     ) -> GraphSearchResult:
         """Find relevant graph nodes scoped to the current case_id."""
-        top_k = top_k or settings.top_k_graph
+        top_k = top_k or TOP_K_BY_QUERY_TYPE.get(query_type, DEFAULT_TOP_K)["nodes"]
+        hops  = hops or HOPS_BY_QUERY_TYPE.get(query_type, DEFAULT_HOPS)
 
         seed_names   = self._match_query_to_entities(query)
         logger.info(f"Cypher seeds: {seed_names}")

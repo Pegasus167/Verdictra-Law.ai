@@ -27,6 +27,9 @@ import os
 import sys
 from dataclasses import dataclass, field
 
+import query
+from retrieval import graph_retriever
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from openai import OpenAI
@@ -201,7 +204,7 @@ Respond in this exact JSON format:
                 f"Fast path: FACT query with {current_context.high_confidence_count} "
                 f"HIGH confidence results — skipping sufficiency check"
             )
-            return self._generate_answer(query, current_context, hops)
+            return self._generate_answer(query, current_context, hops, query_type)
 
         # Standard path — sufficiency check + multi-hop
         while hops < MAX_HOPS:
@@ -224,6 +227,7 @@ Respond in this exact JSON format:
                 current_context = self._expand_context(
                     query, current_context, check.expand_entities,
                     graph_retriever, tree_retriever, fusion_engine,
+                    query_type=query_type,
                 )
                 hops += 1
             else:
@@ -255,6 +259,7 @@ Respond in this exact JSON format:
         logger.info("Deep Research mode activated — gathering all available context...")
 
         current_context = fused_context
+        actual_hops = 0
 
         # Always do maximum hops to gather as much context as possible
         if graph_retriever and tree_retriever and fusion_engine:
@@ -270,9 +275,13 @@ Respond in this exact JSON format:
                     current_context = self._expand_context(
                         query, current_context, expand_entities,
                         graph_retriever, tree_retriever, fusion_engine,
+                        query_type="DEEP_RESEARCH",
                     )
+                    actual_hops += 1
+                else:
+                    break
 
-        return self._generate_deep_research(query, current_context)
+        return self._generate_deep_research(query, current_context, actual_hops)
 
     # ── Sufficiency check ──────────────────────────────────────────────────────
 
@@ -363,11 +372,15 @@ Respond in this exact JSON format:
         graph_retriever,
         tree_retriever,
         fusion_engine,
+        query_type: str = "COMPLEX",
     ) -> FusedContext:
+        from retrieval.graph_retriever import TOP_K_BY_QUERY_TYPE, DEFAULT_TOP_K
         expanded_query = f"{query} {' '.join(expand_entities)}"
-        graph_result   = graph_retriever.search(expanded_query, top_k=10)
-        tree_results   = tree_retriever.search(expanded_query, top_k=5)
-        return fusion_engine.fuse(query, graph_result, tree_results, graph_retriever)
+        graph_result   = graph_retriever.search(expanded_query, query_type=query_type)
+        passages_k     = TOP_K_BY_QUERY_TYPE.get(query_type, DEFAULT_TOP_K)["passages"]
+        tree_results   = tree_retriever.search(expanded_query, top_k=passages_k)
+        new_context    = fusion_engine.fuse(query, graph_result, tree_results, graph_retriever)
+        return fusion_engine.merge(current_context, new_context)
 
     # ── Normal answer generation ───────────────────────────────────────────────
 
@@ -434,6 +447,7 @@ Respond in this exact JSON format:
         self,
         query: str,
         context: FusedContext,
+        actual_hops: int = 0,
     ) -> FinalAnswer:
         """
         Generate comprehensive research report.
@@ -472,7 +486,7 @@ Respond in this exact JSON format:
                 answer=data.get("answer", "Unable to generate research report."),
                 citations=data.get("citations", []),
                 confidence=float(data.get("confidence", 0.9)),
-                hops_taken=MAX_HOPS,
+                hops_taken=actual_hops,
                 answer_type="DEEP_RESEARCH",
                 is_deep_research=True,
             )
